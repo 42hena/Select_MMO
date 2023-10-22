@@ -10,14 +10,17 @@ public:
 	~CNetwork();
 
 	bool NetSocket();
+	bool NetBind();
 
 private:
-	
+	void InitSockAddr(SOCKADDR_IN* addr, DWORD ip_addr, WORD port);
 
 public:
 	WSADATA wsa;
 
 	SOCKET g_listenSocket;
+	u_short port;
+
 };
 
 #endif

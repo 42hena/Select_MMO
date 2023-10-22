@@ -31,9 +31,36 @@ bool CNetwork::NetSocket()
 	g_listenSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (g_listenSocket == INVALID_SOCKET)
 	{
-		wprintf(L"[ServerOn] -> socket() error\n");
+		wprintf(L"[NetSocket] -> socket() error\n");
 		return (false);
 	}
 	wprintf(L"NetSocket\n");
+	return (true);
+}
+
+void CNetwork::InitSockAddr(SOCKADDR_IN* addr, DWORD ip_addr, WORD port)
+{
+	addr->sin_family = AF_INET;
+	addr->sin_addr.s_addr = ip_addr;
+	addr->sin_port = htons(port);
+}
+
+bool CNetwork::NetBind()
+{
+	SOCKADDR_IN addr;
+
+	int bindRet;
+// -----
+
+	ZeroMemory(&addr, sizeof(addr));
+	InitSockAddr(&addr, INADDR_ANY, 10801);
+
+	bindRet = bind(g_listenSocket, (SOCKADDR*)&addr, sizeof(addr));
+	if (bindRet == SOCKET_ERROR)
+	{
+		wprintf(L"[NetBind] -> bind() error\n");
+		return (false);
+	}
+	wprintf(L"NetBind\n");
 	return (true);
 }
