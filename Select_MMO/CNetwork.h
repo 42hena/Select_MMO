@@ -24,6 +24,7 @@ private:
 	
 	bool NetworkAccept();
 	void NetworkRecv(SOCKET socket);
+	bool NetworkSend(SOCKET socket);
 
 public:
 	WSADATA wsa;

@@ -4,10 +4,16 @@
 #include <WinSock2.h>
 
 #include "Session.h"
+#include "Character.h"
 #include "CNetwork.h"
 
+extern std::unordered_map<DWORD, st_Character*> g_characterMap;
+extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
 
 #define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator 
+#define Character_Type std::unordered_map<DWORD, st_Character*>::iterator 
+
+
 
 CNetwork::CNetwork()
 	: g_listenSocket(INVALID_SOCKET)
@@ -157,7 +163,10 @@ bool CNetwork::NetListen()
 
 bool CNetwork::NetworkAccept()
 {
+	static DWORD id;
+
 	st_Session* newSession;
+	st_Character* newCharacter;
 
 	SOCKET clientSocket;
 	SOCKADDR_IN clientAddr;
@@ -171,10 +180,19 @@ bool CNetwork::NetworkAccept()
 		return (false);
 	}
 
-	//
-	newSession = new st_Session(clientSocket, 0, timeGetTime());
+	int newID = id++;
+
+	newSession = new st_Session(clientSocket, newID, timeGetTime());
 	g_sessionMap.insert({ clientSocket, newSession });
+
 	//
+	newCharacter = new st_Character(newSession, newID, 8, 0, 100);
+
+
+	// 순서 체크해보기.
+	g_characterMap.insert({ newID, newCharacter });
+	g_sector[newCharacter->sector.sec_y][newCharacter->sector.sec_x].push_back(newCharacter);
+	
 	wprintf(L"newSession socket[%d\n", clientSocket);
 	wprintf(L"Accept Success\n");
 	return true;
@@ -183,68 +201,102 @@ bool CNetwork::NetworkAccept()
 void CNetwork::NetworkRecv(SOCKET socket)
 {
 	st_Session* session;
-	int recv_ret;
+	st_Character* character;
+	
+	Session_Type siter;
+	Character_Type citer;
+
+	int recvRet;
+	int errCode;
 // -----
 
-	Session_Type iter = g_sessionMap.find(socket);
+	siter = g_sessionMap.find(socket);
 	wprintf(L"Input socket[%d\n", socket);
-	if (iter == g_sessionMap.end())
+	if (siter == g_sessionMap.end())
 	{
 		wprintf(L"[NetworkRecv] -> Find error\n");
 		return ;
 	}
 
-	// session 값 바
-	session = iter->second;
+	// session 값
+	session = siter->second;
 
 	session->lastRecvTime = timeGetTime();
 
 	//session->recv_Q.GetUseSize();
-	recv_ret = recv(session->socket, session->recvQ.GetRearBufferPtr(), session->recvQ.DirectEnqueueSize(), 0);
-	if (recv_ret == 0)
+	recvRet = recv(session->socket, session->recvQ.GetRearBufferPtr(), session->recvQ.DirectEnqueueSize(), 0);
+	if (recvRet == 0 || recvRet == SOCKET_ERROR)
 	{
-#ifdef DEBUG
-		wprintf(L"정상 종료Game id[%d]\n", session->session_id);
-#endif
-		session->disconnectFlag = true;
-		return;
-	}
-	else if (recv_ret == SOCKET_ERROR)
-	{
-		int err_code = GetLastError();
-		if (err_code == WSAEWOULDBLOCK)
+		errCode = GetLastError();
+		if (errCode == WSAEWOULDBLOCK)
 		{
 			return;
 		}
-		else if (err_code == 10054)
+		else if (errCode == 10054)
 		{
-#ifdef DEBUG
-			printf("recv Error[%d]\n", err_code);
-#endif
+			wprintf(L"recv Error[%d]\n", errCode);
 		}
 		else
 		{
-			wprintf(L"another recv errorGame id[%d] code[%d]\n", session->sessionID, err_code);
+			wprintf(L"another recv errorGame id[%d] code[%d]\n", session->sessionID, errCode);
 		}
-		session->disconnectFlag = true;
+
+		//
+		g_sessionMap.erase(siter);
+		
+		citer = g_characterMap.find(session->sessionID);
+		if (citer == g_characterMap.end())
+		{
+			wprintf(L"need Test\n");
+		}
+		character = citer->second;
+		g_characterMap.erase(session->sessionID);
+		g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+		wprintf(L"del\n");
 		return;
 	}
 
-	if (recv_ret > 0)
+	if (recvRet > 0)
 	{
 		// Move pointer
-		wprintf(L"recv_ret[%d]\n", recv_ret);
-		int ret = session->recvQ.MoveRear(recv_ret);
+		wprintf(L"recv_ret[%d]\n", recvRet);
+		int ret = session->recvQ.MoveRear(recvRet);
 		wprintf(L"moveRear[%d]\n", ret);
 	}
 }
 
+bool CNetwork::NetworkSend(SOCKET socket)
+{
+	st_Session* session;
+	int errCode;
+// -----
+
+	Session_Type iter = g_sessionMap.find(socket);
+	if (iter == g_sessionMap.end())
+	{
+		wprintf(L"[NetworkSend] -> Find error\n");
+		return (false);
+	}
+	session = iter->second;
+
+	int send_ret = send(socket, session->sendQ.GetFrontBufferPtr(), session->sendQ.DirectDequeueSize(), 0);
+	if (send_ret == SOCKET_ERROR)
+	{
+		errCode = GetLastError();
+		printf("[NetworkSend] -> send() error[%d]\n", errCode);
+		session->disconnectFlag = true;
+		return (false);
+	}
+	session->sendQ.MoveFront(send_ret);
+	return (true);
+}
 
 void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet)
 {
 	int socketCount;
 	timeval time;
 	int errCode;
+	int i;
 
 	time.tv_sec = 0;
 	time.tv_usec = 0;
@@ -253,31 +305,24 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 	socketCount = select(0, readSet, writeSet, nullptr, &time);
 	if (socketCount > 0)
 	{
-		wprintf(L"qwer\n");
-		for (int i = 0 ; i < 64 ; ++i)
+		for (i = 0 ; i < 64 ; ++i)
 		{
-			bool flag = true;
 			if (socketTable[i] == 0)
 			{
-				// wprintf(L"Socket X[%d]\n", i);
-				continue;
+				break;
 			}
 
 			if (FD_ISSET(socketTable[i], writeSet))
 			{
-				--socketCount;
+				NetworkSend(socketTable[i]);
 			}
 
 			if (FD_ISSET(socketTable[i], readSet))
 			{
-				--socketCount;
-				if (flag)
-				{
-					if (socketTable[i] == g_listenSocket)
-						;
-					else
-						NetworkRecv(socketTable[i]);
-				}
+				if (socketTable[i] == g_listenSocket)
+					NetworkAccept();
+				else
+					NetworkRecv(socketTable[i]);
 			}
 		}
 	}
@@ -307,7 +352,7 @@ void CNetwork::NetworkIO()
 	socketTable[socketCount++] = g_listenSocket;
 	FD_SET(g_listenSocket, &readSet);
 
-	for (Session_Type iter = g_sessionMap.begin(); iter != g_sessionMap.end(); ++iter)
+	for (Session_Type iter = g_sessionMap.begin(); iter != g_sessionMap.end();)
 	{
 		session = iter->second;
 
@@ -320,15 +365,20 @@ void CNetwork::NetworkIO()
 			FD_SET(session->socket, &writeSet);
 		}
 
+		++iter;
+
 		if (FD_SETSIZE <= socketCount)
 		{
 			NetworkSelect(socketTable, &readSet, &writeSet);
+
+			// fd 초기화
 			FD_ZERO(&readSet);
 			FD_ZERO(&writeSet);
 
-
+			// socket Table 초기화
 			ZeroMemory(socketTable, sizeof(socketTable));
 
+			// listen socket 등록
 			FD_SET(g_listenSocket, &readSet);
 			socketTable[0] = g_listenSocket;
 
