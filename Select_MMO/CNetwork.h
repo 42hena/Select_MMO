@@ -9,8 +9,15 @@ public:
 	// dtor
 	~CNetwork();
 
+	bool NetSocket();
+
+private:
+	
+
 public:
 	WSADATA wsa;
+
+	SOCKET g_listenSocket;
 };
 
 #endif
