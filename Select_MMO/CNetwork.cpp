@@ -3,7 +3,11 @@
 #include <iostream>
 #include <WinSock2.h>
 
+#include "Session.h"
 #include "CNetwork.h"
+
+
+#define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator 
 
 CNetwork::CNetwork()
 	: g_listenSocket(INVALID_SOCKET)
@@ -149,4 +153,25 @@ bool CNetwork::NetListen()
 	}
 	wprintf(L"NetListen\n");
 	return (true);
+}
+
+void CNetwork::NetworkIO()
+{
+	st_Session* session;
+
+	SOCKET socketTable[FD_SETSIZE] = { INVALID_SOCKET, };
+	int socketCount = 0;
+
+	FD_SET readSet;
+	FD_SET writeSet;
+
+	// fd ÃÊ±âÈ­ 
+	FD_ZERO(&readSet);
+	FD_ZERO(&writeSet);
+
+	socketTable[socketCount++] = g_listenSocket;
+	FD_SET(g_listenSocket, &readSet);
+
+	if (socketCount > 0)
+		;
 }
