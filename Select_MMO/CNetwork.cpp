@@ -158,7 +158,6 @@ bool CNetwork::NetListen()
 bool CNetwork::NetworkAccept()
 {
 	st_Session* newSession;
-	st_Character* newCharacter;
 
 	SOCKET clientSocket;
 	SOCKADDR_IN clientAddr;
