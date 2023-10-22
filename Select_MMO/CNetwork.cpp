@@ -155,6 +155,56 @@ bool CNetwork::NetListen()
 	return (true);
 }
 
+void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet)
+{
+	int socketCount;
+	timeval time;
+	int errCode;
+
+	time.tv_sec = 0;
+	time.tv_usec = 0;
+
+	
+	socketCount = select(0, readSet, writeSet, nullptr, &time);
+	if (socketCount > 0)
+	{
+		wprintf(L"qwer\n");
+		for (int i = 0 ; i < 64 ; ++i)
+		{
+			bool flag = true;
+			if (socketTable[i] == 0)
+			{
+				// wprintf(L"Socket X[%d]\n", i);
+				continue;
+			}
+
+			if (FD_ISSET(socketTable[i], writeSet))
+			{
+				--socketCount;
+			}
+
+			if (FD_ISSET(socketTable[i], readSet))
+			{
+				--socketCount;
+				if (flag)
+				{
+					if (socketTable[i] == g_listenSocket)
+						;
+					else
+						;
+				}
+			}
+		}
+	}
+	
+	// select 함수 Error 체크
+	if (socketCount == SOCKET_ERROR)
+	{
+		errCode = GetLastError();
+		wprintf(L"select ERROR[%d]\n", errCode);
+	}
+}
+
 void CNetwork::NetworkIO()
 {
 	st_Session* session;
@@ -173,5 +223,5 @@ void CNetwork::NetworkIO()
 	FD_SET(g_listenSocket, &readSet);
 
 	if (socketCount > 0)
-		;
+		NetworkSelect(socketTable, &readSet, &writeSet);
 }

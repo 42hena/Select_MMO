@@ -20,6 +20,8 @@ private:
 	bool NetSetBlockMode();
 	bool NetLinger();
 	bool NetListen();
+	void NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet);
+	
 
 public:
 	WSADATA wsa;
