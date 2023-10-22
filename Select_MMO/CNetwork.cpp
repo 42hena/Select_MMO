@@ -254,7 +254,7 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 	socketCount = select(0, readSet, writeSet, nullptr, &time);
 	if (socketCount > 0)
 	{
-		wprintf(L"Socket Cnt[%d]\n", socketCount);
+		wprintf(L"qwer\n");
 		for (int i = 0 ; i < 64 ; ++i)
 		{
 			bool flag = true;
@@ -266,15 +266,16 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 
 			if (FD_ISSET(socketTable[i], writeSet))
 			{
-
+				--socketCount;
 			}
 
 			if (FD_ISSET(socketTable[i], readSet))
 			{
+				--socketCount;
 				if (flag)
 				{
 					if (socketTable[i] == g_listenSocket)
-						NetworkAccept();
+						;
 					else
 						NetworkRecv(socketTable[i]);
 				}
