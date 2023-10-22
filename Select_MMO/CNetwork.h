@@ -22,6 +22,7 @@ private:
 	bool NetListen();
 	void NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet);
 	
+	bool NetworkAccept();
 
 public:
 	WSADATA wsa;

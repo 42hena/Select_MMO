@@ -155,6 +155,26 @@ bool CNetwork::NetListen()
 	return (true);
 }
 
+bool CNetwork::NetworkAccept()
+{
+	st_Session* newSession;
+
+	SOCKET clientSocket;
+	SOCKADDR_IN clientAddr;
+	int client_len;
+
+	client_len = sizeof(SOCKADDR_IN);
+	clientSocket = accept(g_listenSocket, (SOCKADDR*)&clientAddr, &client_len);
+	if (clientSocket == INVALID_SOCKET)
+	{
+		printf("[NetworkAccept] -> accept() Error\n");
+		return (false);
+	}
+	wprintf(L"Accept Success\n");
+	return true;
+}
+
+
 void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet)
 {
 	int socketCount;
@@ -168,7 +188,7 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 	socketCount = select(0, readSet, writeSet, nullptr, &time);
 	if (socketCount > 0)
 	{
-		wprintf(L"qwer\n");
+		wprintf(L"Socket Cnt[%d]\n", socketCount);
 		for (int i = 0 ; i < 64 ; ++i)
 		{
 			bool flag = true;
@@ -180,16 +200,15 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 
 			if (FD_ISSET(socketTable[i], writeSet))
 			{
-				--socketCount;
+
 			}
 
 			if (FD_ISSET(socketTable[i], readSet))
 			{
-				--socketCount;
 				if (flag)
 				{
 					if (socketTable[i] == g_listenSocket)
-						;
+						NetworkAccept();
 					else
 						;
 				}
