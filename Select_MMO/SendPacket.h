@@ -1,10 +1,10 @@
 #ifndef __SEND_PACKET_H__
 #define __SEND_PACKET_H__
 
-void SendPacket_Unicast();
-void SendPacket_Sector();
-void SendPacket_Around();
-void SendPacket_BroadCast(st_Session*, CSerialization *packet);
+void SendPacketUniCast(st_Session* session, CSerialization* packet);
+void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* exception);
+void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, bool sendMe = false);
+void SendPacketBroadCast(st_Session* session, CSerialization* packet);
 
 
 #endif

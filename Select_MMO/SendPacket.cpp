@@ -79,7 +79,7 @@ void GetAroundSector(int secY, int secX, st_SECTOR_AROUND *around)
 	}
 }
 
-void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, bool sendMe = false)
+void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, bool sendMe)
 {
 	Character_Type citer;
 	st_Character* character;
