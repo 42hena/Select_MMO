@@ -128,10 +128,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.cpp" />
     <ClCompile Include="CNetwork.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.h" />
     <ClInclude Include="CNetwork.h" />
     <ClInclude Include="Session.h" />
   </ItemGroup>

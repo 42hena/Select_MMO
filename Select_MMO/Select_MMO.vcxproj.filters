@@ -27,6 +27,9 @@
     <ClCompile Include="CNetwork.cpp">
       <Filter>소스 파일\Network</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.cpp">
+      <Filter>소스 파일\Network</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CNetwork.h">
@@ -34,6 +37,9 @@
     </ClInclude>
     <ClInclude Include="Session.h">
       <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.h">
+      <Filter>소스 파일\Network</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

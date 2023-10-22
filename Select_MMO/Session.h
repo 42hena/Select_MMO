@@ -1,19 +1,24 @@
 #ifndef __SESSION_H__
 #define __SESSION_H__
 
-//#include "CRingBuffer.h"
+#include "CRingBuffer.h"
 
 struct st_Session
 {
-	SOCKET		socket;
-	DWORD		session_id;
-	/*CRingBuffer	send_Q;
-	CRingBuffer	recv_Q;*/
-	DWORD		last_recv_time;
-	bool		disconnect_flag;
 	st_Session()
-		//: send_Q(2000), recv_Q(2000)
+		: socket(0), sessionID(0), sendQ(2000), recvQ(2000), lastRecvTime(0), disconnectFlag(0)
 	{}
+	st_Session(SOCKET sock, DWORD sessionID, DWORD lastTime)
+		: socket(sock), sessionID(sessionID), sendQ(2000), recvQ(2000), lastRecvTime(lastTime), disconnectFlag(0)
+	{}
+
+// variable
+	SOCKET		socket;
+	DWORD		sessionID;
+	CRingBuffer	sendQ;
+	CRingBuffer	recvQ;
+	DWORD		lastRecvTime;
+	bool		disconnectFlag;
 };
 
 #endif

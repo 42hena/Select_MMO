@@ -23,6 +23,7 @@ private:
 	void NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* writeSet);
 	
 	bool NetworkAccept();
+	void NetworkRecv(SOCKET socket);
 
 public:
 	WSADATA wsa;
