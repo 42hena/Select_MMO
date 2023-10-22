@@ -11,7 +11,9 @@ public:
 
 	bool NetSocket();
 	bool NetBind();
-
+	bool NetSetBlockMode();
+	bool NetLinger();
+	bool NetListen();
 private:
 	void InitSockAddr(SOCKADDR_IN* addr, DWORD ip_addr, WORD port);
 
