@@ -28,7 +28,7 @@ void MoveStart(st_Session* session, CSerialization* packet)
 	if (character == NULL)
 	{
 		wprintf(L"warning\n");
-		return (false);
+		return ;
 	}
 
 
