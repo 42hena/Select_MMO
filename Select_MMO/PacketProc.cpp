@@ -185,9 +185,16 @@ void Echo(st_Session* session, CSerialization* packet)
 {
 	DWORD time;
 // -----
+
+	// packet에서 데이터 뽑기(time)
 	*packet >> time;
 
+	// packet을 재사용하기 위해 초기화
 	packet->Clear();
+
+	// Echo 패킷 만들기
 	CreatePacketEcho(*packet, time);
+
+	// 자신에게 전송 요청
 	SendPacketUniCast(session, packet);
 }
