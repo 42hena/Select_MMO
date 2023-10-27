@@ -159,7 +159,7 @@ void PacketProc(st_Session* session, CSerialization* packet)
 	}
 	case CLIENT_TO_SERVER_ECHO:
 	{
-		//PacketProc_EchoPacket(session, packet);
+		Echo(session, packet);
 		break;
 	}
 	}
