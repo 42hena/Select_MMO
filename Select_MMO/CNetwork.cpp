@@ -7,6 +7,9 @@
 #include "Character.h"
 #include "CNetwork.h"
 
+#include "Util.h"
+
+extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
 
@@ -193,6 +196,11 @@ bool CNetwork::NetworkAccept()
 	g_characterMap.insert({ newID, newCharacter });
 	g_sector[newCharacter->sector.sec_y][newCharacter->sector.sec_x].push_back(newCharacter);
 	
+	PushCreateMyCharacterJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
+	PushCreateOtherCharacterToMeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
+	PushCreateMyCharacterToOthersJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
+	//PushCreateOtherMoveStartTomeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
+
 	wprintf(L"newSession socket[%d\n", clientSocket);
 	wprintf(L"Accept Success\n");
 	return true;
@@ -224,7 +232,10 @@ void CNetwork::NetworkRecv(SOCKET socket)
 	session->lastRecvTime = timeGetTime();
 
 	//session->recv_Q.GetUseSize();
+	printf("so[%d] DE[%d]\n", session->socket, session->recvQ.DirectEnqueueSize());
+
 	recvRet = recv(session->socket, session->recvQ.GetRearBufferPtr(), session->recvQ.DirectEnqueueSize(), 0);
+	printf("Qsize[%d] %d\n", session->recvQ.GetUseSize(), session->recvQ.GetBufferSize());
 	if (recvRet == 0 || recvRet == SOCKET_ERROR)
 	{
 		errCode = GetLastError();
@@ -255,14 +266,9 @@ void CNetwork::NetworkRecv(SOCKET socket)
 		wprintf(L"del\n");
 		return;
 	}
-
-	if (recvRet > 0)
-	{
-		// Move pointer
-		wprintf(L"recv_ret[%d]\n", recvRet);
-		int ret = session->recvQ.MoveRear(recvRet);
-		wprintf(L"moveRear[%d]\n", ret);
-	}
+	session->recvQ.MoveRear(recvRet);
+	while (PacketMarshall(session))
+		;
 }
 
 bool CNetwork::NetworkSend(SOCKET socket)

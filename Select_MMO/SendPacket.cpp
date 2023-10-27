@@ -49,8 +49,10 @@ void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* 
 	{
 		character = *siter;
 		++siter;
+		printf("%p %p nowID:%d newID:%d\n", character, exception, character->characterId, exception->characterId);
 		if (character != exception)
 		{
+			printf("%d %d] [%d %d\n", character->x, character->y, exception->x, exception->y);
 			SendPacketUniCast(character->session, packet);
 		}
 	}
@@ -76,15 +78,19 @@ void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, boo
 	GetAroundSector(character->sector.sec_y, character->sector.sec_x, &aroundSector);
 
 	if (sendMe)
-		for (i = 0 ; i < aroundSector.count ; ++i)
+	{
+		for (i = 0; i < aroundSector.count; ++i)
 		{
 			SendPacketSector(aroundSector.around[i].sec_y, aroundSector.around[i].sec_x, packet, nullptr);
 		}
+	}
 	else
+	{
 		for (i = 0; i < aroundSector.count; ++i)
 		{
 			SendPacketSector(aroundSector.around[i].sec_y, aroundSector.around[i].sec_x, packet, character);
 		}
+	}
 
 
 }

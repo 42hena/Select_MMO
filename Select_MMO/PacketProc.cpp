@@ -15,7 +15,7 @@
 extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 
-bool MoveStart(st_Session* session, CSerialization* packet)
+void MoveStart(st_Session* session, CSerialization* packet)
 {
 	BYTE dir;
 	short x, y;
@@ -57,14 +57,13 @@ bool MoveStart(st_Session* session, CSerialization* packet)
 	character->x = x;
 	character->y = y;
 	//Update
-
+	printf("POS: %d %d dir: %d\n", x, y, dir);
+	packet->Clear();
 	CreatePacketMoveStart(*packet, session->sessionID, dir, x, y);
 	SendPacketSectorAroundCast(session, packet);
-
-	return (true);
 }
 
-bool MoveStop(st_Session* session, CSerialization* packet)
+void MoveStop(st_Session* session, CSerialization* packet)
 {
 	BYTE dir;
 	short x, y;
@@ -77,7 +76,7 @@ bool MoveStop(st_Session* session, CSerialization* packet)
 	if (character == NULL)
 	{
 		wprintf(L"warning\n");
-		return (false);
+		return ;
 	}
 
 	// sync pass
@@ -86,15 +85,13 @@ bool MoveStop(st_Session* session, CSerialization* packet)
 	character->x = x;
 	character->y = y;
 	//Update
-
+	packet->Clear();
 	CreatePacketMoveStop(*packet, session->sessionID, dir, x, y);
 	SendPacketSectorAroundCast(session, packet);
-
-	return (true);
 }
 
 
-bool Attack1Packet(st_Session* session, CSerialization* buffer)
+void Attack1Packet(st_Session* session, CSerialization* packet)
 {
 	BYTE dir;
 	short x;
@@ -104,7 +101,7 @@ bool Attack1Packet(st_Session* session, CSerialization* buffer)
 	st_SECTOR_AROUND aroundSector;
 // -----
 
-	*buffer >> dir >> x >> y;
+	*packet >> dir >> x >> y;
 
 	character = g_characterMap[session->sessionID];
 
@@ -113,14 +110,13 @@ bool Attack1Packet(st_Session* session, CSerialization* buffer)
 	{
 		// 예외 처리
 		wprintf(L"[Attack1] -> nullptr\n");
-		return (false);
+		return ;
 	}
 
-	CreatePacketAttack1(*buffer, character->characterId, character->direction, character->x, character->y);
 
-
-	buffer->Clear();
-	SendPacketSectorAroundCast(session, buffer);
+	packet->Clear();
+	CreatePacketAttack1(*packet, character->characterId, character->direction, character->x, character->y);
+	SendPacketSectorAroundCast(session, packet);
 
 	character->sector.sec_y = character->y / 150;
 	character->sector.sec_x = character->x / 150;
@@ -152,9 +148,11 @@ bool Attack1Packet(st_Session* session, CSerialization* buffer)
 					(now_x - dfATTACK1_RANGE_X) <= victim->x && victim->x <= now_x)
 				{
 					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
-					CreatePacketDamage(*buffer, character->characterId, victim->characterId, victim->hp);
+					packet->Clear();
+					CreatePacketDamage(*packet, character->characterId, victim->characterId, victim->hp);
 
-					SendPacketSectorAroundCast(victim->session, buffer, true);
+					SendPacketSectorAroundCast(victim->session, packet, true);
+					
 				}
 			}
 		}
@@ -172,25 +170,24 @@ bool Attack1Packet(st_Session* session, CSerialization* buffer)
 				if ((now_y - dfATTACK1_RANGE_Y) <= victim->y && victim->y <= now_y &&
 					(now_x + dfATTACK1_RANGE_X) >= victim->x && victim->x >= now_x)
 				{
+					packet->Clear();
 					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
-					CreatePacketDamage(*buffer, character->characterId, victim->characterId, victim->hp);
+					CreatePacketDamage(*packet, character->characterId, victim->characterId, victim->hp);
 
-					SendPacketSectorAroundCast(victim->session, buffer, true);
+					SendPacketSectorAroundCast(victim->session, packet, true);
 				}
 			}
 		}
 	}
-
-	return true;
 }
 
-bool Echo(st_Session* session, CSerialization* packet)
+void Echo(st_Session* session, CSerialization* packet)
 {
 	DWORD time;
-
+// -----
 	*packet >> time;
 
+	packet->Clear();
 	CreatePacketEcho(*packet, time);
-
 	SendPacketUniCast(session, packet);
 }

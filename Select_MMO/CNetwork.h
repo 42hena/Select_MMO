@@ -33,7 +33,7 @@ public:
 	u_short port;
 
 private:
-	std::unordered_map<SOCKET, st_Session*> g_sessionMap;
+	
 
 };
 

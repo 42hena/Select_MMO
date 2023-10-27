@@ -19,6 +19,11 @@ struct st_Sector
 
 struct st_SECTOR_AROUND
 {
+	st_SECTOR_AROUND()
+		: count(0)
+	{
+
+	}
 	int count;
 	st_Sector around[9];
 };

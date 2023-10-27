@@ -7,7 +7,7 @@
 struct st_Character
 {
 	st_Character(st_Session* newSession, DWORD	newId, BYTE action, BYTE dir, char hp)
-		: session(newSession), characterId(newId), action(action), direction(dir), hp(hp), y(rand() % 6400), x(rand() % 6400), attackTime(0)
+		: session(newSession), characterId(newId), action(action), direction(dir), hp(hp), y(100), x(100), attackTime(0)
 	{
 		sector = { y / 150, x / 150 };
 		prevSector = sector;
