@@ -19,6 +19,12 @@
     <Filter Include="소스 파일\Network">
       <UniqueIdentifier>{65420065-164e-4c5e-b2e5-19d3f93fb2a5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\SendPacket">
+      <UniqueIdentifier>{f3848b55-025b-4828-a679-992defc104c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\PacketProc">
+      <UniqueIdentifier>{4d839260-70ad-464c-acb7-26cf69469222}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -30,6 +36,21 @@
     <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.cpp">
       <Filter>소스 파일\Network</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\SerializationBuffer.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="CreatePacket.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="SendPacket.cpp">
+      <Filter>소스 파일\SendPacket</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketProc.cpp">
+      <Filter>소스 파일\PacketProc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CNetwork.h">
@@ -40,6 +61,30 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.h">
       <Filter>소스 파일\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\SerializationBuffer.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="CreatePacket.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="PROTOCOL.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Sector.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="SendPacket.h">
+      <Filter>소스 파일\SendPacket</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketProc.h">
+      <Filter>소스 파일\PacketProc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

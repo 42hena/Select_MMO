@@ -129,13 +129,30 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.cpp" />
+    <ClCompile Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\SerializationBuffer.cpp" />
     <ClCompile Include="CNetwork.cpp" />
+    <ClCompile Include="CreatePacket.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PacketProc.cpp" />
+    <ClCompile Include="SendPacket.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\CRingBuffer.h" />
+    <ClInclude Include="..\..\..\..\OneDrive\바탕 화면\새 폴더\tmp\MMOTcp\MMOTcp\SerializationBuffer.h" />
+    <ClInclude Include="Character.h" />
     <ClInclude Include="CNetwork.h" />
+    <ClInclude Include="CreatePacket.h" />
+    <ClInclude Include="PacketProc.h" />
+    <ClInclude Include="PROTOCOL.h" />
+    <ClInclude Include="Sector.h" />
+    <ClInclude Include="SendPacket.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Session.h" />
+    <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
