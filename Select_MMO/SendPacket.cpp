@@ -5,8 +5,9 @@
 
 #include "SerializationBuffer.h"
 #include "PROTOCOL.h"
+#include "Session.h"
 #include "Character.h"
-#include "limits.h"
+#include "Util.h"
 
 extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
@@ -55,30 +56,6 @@ void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* 
 	}
 }
 
-void GetAroundSector(int secY, int secX, st_SECTOR_AROUND *around)
-{
-	int i;
-	int j;
-// -----
-
-	--secY;
-	--secX;
-
-	for (i = 0; i < 3; ++i)
-	{
-		if (secY + i < 0 || secY + i >= (6400 / 150 + 1))
-			continue ;
-		for (j = 0; j < 3; ++j)
-		{
-			if (secX + j < 0 || secX + j >= (6400 / 150 + 1))
-				continue ;
-			around->around[around->count].sec_y = secY + i;
-			around->around[around->count].sec_x = secX + j;
-			++around->count;
-		}
-	}
-}
-
 void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, bool sendMe)
 {
 	Character_Type citer;
@@ -98,10 +75,18 @@ void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, boo
 	character = citer->second;
 	GetAroundSector(character->sector.sec_y, character->sector.sec_x, &aroundSector);
 
-	for (i = 0 ; i < aroundSector.count ; ++i)
-	{
-		SendPacketSector(aroundSector.around[i].sec_y, aroundSector.around[i].sec_x, packet, character);
-	}
+	if (sendMe)
+		for (i = 0 ; i < aroundSector.count ; ++i)
+		{
+			SendPacketSector(aroundSector.around[i].sec_y, aroundSector.around[i].sec_x, packet, nullptr);
+		}
+	else
+		for (i = 0; i < aroundSector.count; ++i)
+		{
+			SendPacketSector(aroundSector.around[i].sec_y, aroundSector.around[i].sec_x, packet, character);
+		}
+
+
 }
 
 void SendPacketBroadCast(st_Session* session, CSerialization *packet)
