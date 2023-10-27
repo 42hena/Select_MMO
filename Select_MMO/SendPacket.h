@@ -6,5 +6,4 @@ void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* 
 void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, bool sendMe = false);
 void SendPacketBroadCast(st_Session* session, CSerialization* packet);
 
-
 #endif
