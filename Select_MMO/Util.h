@@ -7,5 +7,9 @@ void PushCreateMyCharacterJob(st_Session* session, DWORD id, BYTE dir, short x, 
 void PushCreateOtherCharacterToMeJob(st_Session* session, DWORD id, BYTE dir, short x, short y, BYTE hp);
 void PushCreateMyCharacterToOthersJob(st_Session* session, DWORD id, BYTE dir, short x, short y, BYTE hp);
 void PushCreateOtherMoveStartTomeJob(st_Session* session, DWORD id, BYTE dir, short x, short y, BYTE hp);
+void CharacterSectorUpdatePacket(st_Character* character);
+bool IsCharacterSectorUpdate(st_Character* character);
+void AddCharacterToSector(st_Character* character);
+void RemoveCharacterFromSector(st_Character* character);
 
 #endif
