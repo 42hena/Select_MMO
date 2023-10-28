@@ -15,6 +15,9 @@
 extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
+extern DWORD g_frameTime, totalTime;
+
+#define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
 void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
 {
@@ -113,9 +116,9 @@ void PushCreateOtherMoveStartTomeJob(st_Session* session, DWORD id, BYTE dir, sh
 		for (auto iter = g_sector[secY][secX].begin(); iter != g_sector[secY][secX].end(); ++iter)
 		{
 			character = *iter;
-			if (character->direction != 8)
+			if (character->action != 8)
 			{
-				CreatePacketMoveStart(packet, character->characterId, character->direction, character->x, character->y);
+				CreatePacketMoveStart(packet, character->characterId, character->action, character->x, character->y);
 				SendPacketUniCast(session, &packet);
 				packet.Clear();
 			}
@@ -129,7 +132,6 @@ void PacketProc(st_Session* session, CSerialization* packet)
 // -----
 
 	*packet >> type;
-	printf("Packet [%d\n", type);
 	
 	switch (type)
 	{
@@ -303,20 +305,7 @@ void CharacterSectorUpdatePacket(st_Character* character)
 	int i;
 	// Get remove add sector 
 	GetUpdateSectorAround(character, &deleteSector, &newSector);
-	printf("------------------------------------\n");
-	printf("del Test\n");
-	for (int i = 0; i < deleteSector.count; ++i)
-	{
-		printf("DEL:[%d %d]\n", deleteSector.around[i].sec_y, deleteSector.around[i].sec_x);
-	}
-	printf("\n\n");
-	printf("new Test\n");
-	for (int i = 0; i < newSector.count; ++i)
-	{
-		printf("new:[%d %d]\n", newSector.around[i].sec_y, newSector.around[i].sec_x);
-	}
 
-	printf("------------------------------------\n\n");
 	// remove sector - delete Character
 	CreatePacketDeleteCharacter(buffer, character->characterId);
 	
@@ -351,16 +340,12 @@ void CharacterSectorUpdatePacket(st_Character* character)
 	buffer.Clear();
 
 	// add sector -> me
-	/*MakePacket_MoveStart(buffer,
-		character->character_id, character->direction,
-		character->x, character->y);
-	for (i = 0; i < add_sector.count; ++i)
+	CreatePacketMoveStart(buffer, character->characterId, character->action, character->x, character->y);
+	for (i = 0; i < newSector.count; ++i)
 	{
-		NetworkUtil_SectorOne(add_sector.around[i].sec_x,
-			add_sector.around[i].sec_y,
-			buffer, NULL);
+		SendPacketSector(newSector.around[i].sec_x, newSector.around[i].sec_y, &buffer, NULL);
 	}
-	buffer.Clear();*/
+	buffer.Clear();
 
 
 	// 4
@@ -375,6 +360,7 @@ void CharacterSectorUpdatePacket(st_Character* character)
 
 			if (exist_character != character)
 			{
+				printf("You dir[%d] id: [%d]\n", exist_character->direction, exist_character->characterId);
 				CreatePacketCreateOtherCharacter(buffer, exist_character->characterId, exist_character->direction, exist_character->x, exist_character->y, exist_character->hp);
 				
 				if (character->action <= 7)
@@ -384,6 +370,131 @@ void CharacterSectorUpdatePacket(st_Character* character)
 				SendPacketUniCast(character->session, &buffer);
 				buffer.Clear();
 			}
+		}
+	}
+}
+
+bool CheckCharacterMove(int y, int x)
+{
+	if (y < 0 || y > 6400 || x < 0 || x > 6400)
+		return (false);
+	return (true);
+}
+
+void Update()
+{
+	st_Character* character;
+	DWORD now;
+// -----
+
+	now = timeGetTime();
+	totalTime += now - g_frameTime;
+	g_frameTime = now;
+	if (totalTime < 40)
+		return;
+	totalTime -= 40;
+	for (Charcter_Type cIter = g_characterMap.begin(); cIter != g_characterMap.end(); )
+	{
+		character = cIter->second;
+		++cIter;
+		if (character->hp <= 0)
+		{
+
+			// 삭제 요청
+			;
+		}
+		else
+		{
+			if (timeGetTime() - character->session->lastRecvTime > dfNETWORK_PACKET_RECV_TIMEOUT)
+			{
+				// 삭제 요청
+				continue;
+			}
+			switch (character->action)
+			{
+			case MOVE_DIR_LL:
+			{
+				if (CheckCharacterMove(character->y, character->x - SPEED_PLAYER_X))
+				{
+					character->x -= SPEED_PLAYER_X;
+				}
+				break;
+			}
+			case MOVE_DIR_LU:
+			{
+				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+				{
+					character->y -= SPEED_PLAYER_Y;
+					character->x -= SPEED_PLAYER_X;
+				}
+				break;
+			}
+			case MOVE_DIR_UU:
+			{
+				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x))
+				{
+					character->y -= SPEED_PLAYER_Y;
+				}
+				break;
+			}
+			case MOVE_DIR_RU:
+			{
+				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+				{
+					character->y -= SPEED_PLAYER_Y;
+					character->x += SPEED_PLAYER_X;
+				}
+				break;
+			}
+
+			case MOVE_DIR_RR:
+			{
+				if (CheckCharacterMove(character->y, character->x + SPEED_PLAYER_X))
+				{
+					character->x += SPEED_PLAYER_X;
+				}
+				break;
+			}
+
+			case MOVE_DIR_RD:
+			{
+				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+				{
+					character->y += SPEED_PLAYER_Y;
+					character->x += SPEED_PLAYER_X;
+				}
+				break;
+			}
+
+			case MOVE_DIR_DD:
+			{
+				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x))
+				{
+					character->y += SPEED_PLAYER_Y;
+				}
+				break;
+			}
+
+			case MOVE_DIR_LD:
+			{
+				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+				{
+					character->y += SPEED_PLAYER_Y;
+					character->x -= SPEED_PLAYER_X;
+				}
+				break;
+			}
+			}// SWITCH문
+			if (character->action <= MOVE_DIR_LD)
+			{
+				character->sector.sec_x = character->x / 150;
+				character->sector.sec_y = character->y / 150;
+				if (IsCharacterSectorUpdate(character))
+				{
+					CharacterSectorUpdatePacket(character);
+				}
+			}
+			character->prevSector = character->sector;
 		}
 	}
 }
