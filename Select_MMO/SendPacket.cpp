@@ -49,10 +49,8 @@ void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* 
 	{
 		character = *siter;
 		++siter;
-		printf("%p %p nowID:%d newID:%d\n", character, exception, character->characterId, exception->characterId);
 		if (character != exception)
 		{
-			printf("%d %d] [%d %d\n", character->x, character->y, exception->x, exception->y);
 			SendPacketUniCast(character->session, packet);
 		}
 	}
