@@ -235,7 +235,6 @@ void CNetwork::NetworkRecv(SOCKET socket)
 	printf("so[%d] DE[%d]\n", session->socket, session->recvQ.DirectEnqueueSize());
 
 	recvRet = recv(session->socket, session->recvQ.GetRearBufferPtr(), session->recvQ.DirectEnqueueSize(), 0);
-	printf("Qsize[%d] %d\n", session->recvQ.GetUseSize(), session->recvQ.GetBufferSize());
 	if (recvRet == 0 || recvRet == SOCKET_ERROR)
 	{
 		errCode = GetLastError();
