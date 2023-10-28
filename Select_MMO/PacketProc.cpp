@@ -49,12 +49,12 @@ void MoveStart(st_Session* session, CSerialization* packet)
 	case MOVE_DIR_RR:
 	case MOVE_DIR_RU:
 	case MOVE_DIR_RD:
-		dir = MOVE_DIR_RR;
+		character->direction = MOVE_DIR_RR;
 		break;
 	case MOVE_DIR_LL:
 	case MOVE_DIR_LU:
 	case MOVE_DIR_LD:
-		dir = MOVE_DIR_LL;
+		character->direction = MOVE_DIR_LL;
 		break;
 
 	default:
@@ -67,12 +67,9 @@ void MoveStart(st_Session* session, CSerialization* packet)
 	character->sector.sec_y = y / 150;
 	if (IsCharacterSectorUpdate(character))
 	{
-		printf("[%d %d] [%d %d]\n", character->sector.sec_y, character->sector.sec_x, character->prevSector.sec_y, character->prevSector.sec_x);
 		CharacterSectorUpdatePacket(character);
 	}
 	character->prevSector = character->sector;
-
-	character->direction = dir;
 	
 	//Update
 	packet->Clear();
@@ -110,11 +107,29 @@ void MoveStop(st_Session* session, CSerialization* packet)
 
 
 	character->action = 8;
-	character->direction = dir;
-	character->sector.sec_x = x / 150;
-	character->sector.sec_y = y / 150;
+	switch (dir)
+	{
+	case MOVE_DIR_LL:
+	case MOVE_DIR_LU:
+	case MOVE_DIR_LD:
+		character->direction = MOVE_DIR_LL;
+		break;
+	case MOVE_DIR_RR:
+	case MOVE_DIR_RU:
+	case MOVE_DIR_RD:
+		character->direction = MOVE_DIR_RR;
+		break;
+	}
 	character->x = x;
 	character->y = y;
+	character->sector.sec_x = x / 150;
+	character->sector.sec_y = y / 150;
+	if (IsCharacterSectorUpdate(character))
+	{
+		CharacterSectorUpdatePacket(character);
+	}
+	character->prevSector = character->sector;
+	
 	//Update
 	packet->Clear();
 	CreatePacketMoveStop(*packet, session->sessionID, dir, x, y);
