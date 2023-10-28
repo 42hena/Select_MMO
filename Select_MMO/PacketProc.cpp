@@ -33,9 +33,17 @@ void MoveStart(st_Session* session, CSerialization* packet)
 
 
 	// sync pass
+	if (abs(character->x - x) > ERROR_RANGE || abs(character->y - y) > ERROR_RANGE)
+	{
+		packet->Clear();
+		x = character->x;
+		y = character->y;
+		CreatePacketSync(*packet, character->characterId, x, y);
+		SendPacketSectorAroundCast(session, packet, true);
+	}
+
 
 	character->action = dir;
-	character->direction = dir;
 	switch (dir)
 	{
 	case MOVE_DIR_RR:
@@ -53,11 +61,20 @@ void MoveStart(st_Session* session, CSerialization* packet)
 		break;
 
 	}
-	character->direction = dir;
 	character->x = x;
 	character->y = y;
+	character->sector.sec_x = x / 150;
+	character->sector.sec_y = y / 150;
+	if (IsCharacterSectorUpdate(character))
+	{
+		printf("[%d %d] [%d %d]\n", character->sector.sec_y, character->sector.sec_x, character->prevSector.sec_y, character->prevSector.sec_x);
+		CharacterSectorUpdatePacket(character);
+	}
+	character->prevSector = character->sector;
+
+	character->direction = dir;
+	
 	//Update
-	printf("POS: %d %d dir: %d\n", x, y, dir);
 	packet->Clear();
 	CreatePacketMoveStart(*packet, session->sessionID, dir, x, y);
 	SendPacketSectorAroundCast(session, packet);
@@ -70,18 +87,32 @@ void MoveStop(st_Session* session, CSerialization* packet)
 	st_Character* character;
 // -----
 
+	// packet에서 데이터 뽑기(방향, x좌표, y좌표)
 	*packet >> dir >> x >> y;
 
+	// 케릭터 존재 검색
 	character = g_characterMap[session->sessionID];
 	if (character == NULL)
 	{
-		wprintf(L"warning\n");
+		wprintf(L"warning\n"); // TODO: 로그를 파일로 빼야할 듯.
 		return ;
 	}
 
-	// sync pass
+	// 서버와 클라이언트 싱크 맞추기.
+	if (abs(character->x - x) > ERROR_RANGE || abs(character->y - y) > ERROR_RANGE)
+	{
+		packet->Clear();
+		x = character->x;
+		y = character->y;
+		CreatePacketSync(*packet, character->characterId, x, y);
+		SendPacketSectorAroundCast(session, packet, true);
+	}
+
+
 	character->action = 8;
 	character->direction = dir;
+	character->sector.sec_x = x / 150;
+	character->sector.sec_y = y / 150;
 	character->x = x;
 	character->y = y;
 	//Update
@@ -93,12 +124,14 @@ void MoveStop(st_Session* session, CSerialization* packet)
 
 void Attack1Packet(st_Session* session, CSerialization* packet)
 {
+	st_Character* victim;
+	st_Character* character;
+	st_SECTOR_AROUND aroundSector;
+
+	// 패킷의 임시 변수
 	BYTE dir;
 	short x;
 	short y;
-	st_Character* character;
-	st_Character* victim;
-	st_SECTOR_AROUND aroundSector;
 // -----
 
 	*packet >> dir >> x >> y;
@@ -113,6 +146,15 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 		return ;
 	}
 
+	// 서버와 클라이언트 싱크 맞추기.
+	if (abs(character->x - x) > ERROR_RANGE || abs(character->y - y) > ERROR_RANGE)
+	{
+		packet->Clear();
+		x = character->x;
+		y = character->y;
+		CreatePacketSync(*packet, character->characterId, x, y);
+		SendPacketSectorAroundCast(session, packet, true);
+	}
 
 	packet->Clear();
 	CreatePacketAttack1(*packet, character->characterId, character->direction, character->x, character->y);
