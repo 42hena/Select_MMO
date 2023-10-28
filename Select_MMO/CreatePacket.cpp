@@ -50,7 +50,7 @@ void CreatePacketDeleteCharacter(CSerialization& buffer, DWORD id)
 	// Payload Info
 	buffer << id;
 }
-#include <iostream>
+
 void CreatePacketMoveStart(CSerialization& buffer, DWORD id, BYTE dir, short x, short y)
 {
 	SHORT size;
@@ -65,7 +65,6 @@ void CreatePacketMoveStart(CSerialization& buffer, DWORD id, BYTE dir, short x, 
 
 	// Payload Info
 	buffer << id << dir << x << y;
-	printf("Create:%d %d %d %d %d size:%d type%d psize:%d\n", id, dir, x, y, size, type, buffer.GetDataSize());
 }
 
 void CreatePacketMoveStop(CSerialization& buffer, DWORD id, BYTE dir, short x, short y)
