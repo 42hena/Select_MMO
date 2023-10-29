@@ -12,5 +12,6 @@ bool IsCharacterSectorUpdate(st_Character* character);
 void AddCharacterToSector(st_Character* character);
 void RemoveCharacterFromSector(st_Character* character);
 void Update();
+void PrintLog();
 
 #endif
