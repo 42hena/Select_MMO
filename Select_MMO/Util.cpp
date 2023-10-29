@@ -12,6 +12,7 @@
 #include "SendPacket.h"
 #include "PROTOCOL.h"
 
+extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
@@ -49,7 +50,6 @@ void PushCreateMyCharacterJob(st_Session *session, DWORD id, BYTE dir, short x, 
 
 	CreatePacketCreateMyCharacter(packet, id, dir, x, y, hp);
 
-	wprintf(L"%d\n", packet.GetDataSize());
 	SendPacketUniCast(session, &packet);
 }
 
@@ -146,18 +146,10 @@ void PacketProc(st_Session* session, CSerialization* packet)
 		break;
 	}
 	case CLIENT_TO_SERVER_ATTACK1:
-	{
-		//PacketProc_Attack1Packet(session, packet);
-		break;
-	}
 	case CLIENT_TO_SERVER_ATTACK2:
-	{
-		//PacketProc_Attack2Packet(session, packet);
-		break;
-	}
 	case CLIENT_TO_SERVER_ATTACK3:
 	{
-		//PacketProc_Attack3Packet(session, packet);
+		Attack1Packet(session, packet);
 		break;
 	}
 	case CLIENT_TO_SERVER_ECHO:
@@ -188,10 +180,8 @@ bool PacketMarshall(st_Session* session)
 	peekRet = session->recvQ.Peek(packet.GetBufferPtr(), HEADER_SIZE);
 
 	packet >> size; 
-	printf("RecvSize[%d]\n", size);
 	if (size + HEADER_SIZE > session->recvQ.GetUseSize())
 	{
-		printf("RecvSize[%d %d]\n", size + HEADER_SIZE, session->recvQ.GetUseSize());
 		return (false);
 	}
 
@@ -360,7 +350,6 @@ void CharacterSectorUpdatePacket(st_Character* character)
 
 			if (exist_character != character)
 			{
-				printf("You dir[%d] id: [%d]\n", exist_character->direction, exist_character->characterId);
 				CreatePacketCreateOtherCharacter(buffer, exist_character->characterId, exist_character->direction, exist_character->x, exist_character->y, exist_character->hp);
 				
 				if (character->action <= 7)
@@ -380,18 +369,22 @@ bool CheckCharacterMove(int y, int x)
 		return (false);
 	return (true);
 }
-
+DWORD Log;
+DWORD frame;
 void Update()
 {
 	st_Character* character;
+	SOCKET sock;
 	DWORD now;
 // -----
 
 	now = timeGetTime();
 	totalTime += now - g_frameTime;
+	Log += now - g_frameTime;;
 	g_frameTime = now;
 	if (totalTime < 40)
 		return;
+	frame++;
 	totalTime -= 40;
 	for (Charcter_Type cIter = g_characterMap.begin(); cIter != g_characterMap.end(); )
 	{
@@ -399,15 +392,33 @@ void Update()
 		++cIter;
 		if (character->hp <= 0)
 		{
-
-			// 昏力 夸没
-			;
+			CSerialization buffer;
+			sock = character->session->socket;
+			//printf("hp socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
+			CreatePacketDeleteCharacter(buffer, character->session->sessionID);
+			SendPacketSectorAroundCast(character->session, &buffer);
+			g_sessionMap.erase(sock);
+			g_characterMap.erase(character->session->sessionID);
+			g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+			delete character->session;
+			delete character;
+			closesocket(sock);
 		}
 		else
 		{
 			if (timeGetTime() - character->session->lastRecvTime > dfNETWORK_PACKET_RECV_TIMEOUT)
 			{
-				// 昏力 夸没
+				CSerialization buffer;
+				sock = character->session->socket;
+				//printf("Time socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
+				CreatePacketDeleteCharacter(buffer, character->session->sessionID);
+				SendPacketSectorAroundCast(character->session, &buffer);
+				g_sessionMap.erase(sock);
+				g_characterMap.erase(character->session->sessionID);
+				g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+				delete character->session;
+				delete character;
+				closesocket(sock);
 				continue;
 			}
 			switch (character->action)
@@ -496,5 +507,49 @@ void Update()
 			}
 			character->prevSector = character->sector;
 		}
+	}
+}
+
+#include <time.h>
+void PrintLog()
+{
+	FILE* fp;
+	char LogBuf[512];
+
+	if (Log >= 1000)
+	{
+		fopen_s(&fp, "Select_MMO_LOG.txt", "ab+");
+		int cnt = 0;
+		Log -= 1000;
+		for (int i = 0; i < 6400 / 150 + 1; ++i)
+		{
+			for (int j = 0; j < 6400 / 150 + 1; ++j)
+			{
+				cnt += g_sector[i][j].size();
+			}
+		}
+
+
+		time_t curTime = time(NULL);
+
+		// Convert the current time 
+		struct tm pLocal;
+#if defined(_WIN32) || defined(_WIN64) 
+		localtime_s(&pLocal, &curTime);
+#else 
+		localtime_r(&curTime, pLocal);
+#endif 
+		sprintf_s(LogBuf, "%04d-%02d-%02dT%02d:%02d:%02d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
+			pLocal.tm_hour, pLocal.tm_min, pLocal.tm_sec);
+		printf("%s", LogBuf);
+		fwrite(LogBuf, 1, strlen(LogBuf), fp);
+		// Print the current time 
+
+		sprintf_s(LogBuf, "Server Frame: %d Session cnt: %d  character cnt: %d sector: %d\n", 
+			frame, g_sessionMap.size(), g_characterMap.size(), cnt);
+		printf("%s", LogBuf);
+		fwrite(LogBuf, 1, strlen(LogBuf), fp);
+		frame = 0;
+		fclose(fp);
 	}
 }
