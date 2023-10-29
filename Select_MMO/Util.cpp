@@ -335,7 +335,7 @@ void CharacterSectorUpdatePacket(st_Character* character)
 	// my info -> add sector
 	for (i = 0; i < newSector.count; ++i)
 	{
-		SendPacketSector(newSector.around[i].sec_x, newSector.around[i].sec_y, &buffer, character);
+		SendPacketSector(newSector.around[i].sec_y, newSector.around[i].sec_x, &buffer, NULL);
 	}
 	buffer.Clear();
 
@@ -343,7 +343,7 @@ void CharacterSectorUpdatePacket(st_Character* character)
 	CreatePacketMoveStart(buffer, character->characterId, character->action, character->x, character->y);
 	for (i = 0; i < newSector.count; ++i)
 	{
-		SendPacketSector(newSector.around[i].sec_x, newSector.around[i].sec_y, &buffer, NULL);
+		SendPacketSector(newSector.around[i].sec_y, newSector.around[i].sec_x, &buffer, NULL);
 	}
 	buffer.Clear();
 
