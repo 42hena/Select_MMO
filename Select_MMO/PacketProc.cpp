@@ -147,10 +147,15 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 	BYTE dir;
 	short x;
 	short y;
+
+
+	short secY;
+	short secX;
+	int nowY;
+	int nowX;
 // -----
 
 	*packet >> dir >> x >> y;
-
 	character = g_characterMap[session->sessionID];
 
 	// nullptr || dir Error
@@ -175,34 +180,34 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 	CreatePacketAttack1(*packet, character->characterId, character->direction, character->x, character->y);
 	SendPacketSectorAroundCast(session, packet);
 
+	character->y = y;
+	character->x = x;
 	character->sector.sec_y = character->y / 150;
 	character->sector.sec_x = character->x / 150;
 
-	short now_x = character->x;
-	short now_y = character->y;
+	nowX = character->x;
+	nowY = character->y;
 
-	short sec_y;
-	short sec_x;
+	
 
 
 	// 데미지 먹이는 곳. 
+	secY = nowY / 150;
+	secX = nowX / 150;
 
-	sec_y = now_y / 150;
-	sec_x = now_x / 150;
-
-	GetAroundSector(sec_y, sec_x, &aroundSector);
+	GetAroundSector(secY, secX, &aroundSector);
 	if (dir == MOVE_DIR_LL)
 	{
 		for (int i = 0; i < aroundSector.count; ++i)
 		{
-			sec_y = aroundSector.around->sec_y;
-			sec_x = aroundSector.around->sec_x;
+			secY = aroundSector.around[i].sec_y;
+			secX = aroundSector.around[i].sec_x;
 
-			for (auto it = g_sector[sec_y][sec_x].begin(); it != g_sector[sec_y][sec_x].end(); it++)
+			for (auto it = g_sector[secY][secX].begin(); it != g_sector[secY][secX].end(); it++)
 			{
 				victim = *it;
-				if ((now_y - dfATTACK1_RANGE_Y) <= victim->y && victim->y <= now_y &&
-					(now_x - dfATTACK1_RANGE_X) <= victim->x && victim->x <= now_x)
+				if ((nowY- dfATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
+					(nowX - dfATTACK1_RANGE_X) <= victim->x && victim->x < nowX)
 				{
 					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
 					packet->Clear();
@@ -218,14 +223,14 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 	{
 		for (int i = 0; i < aroundSector.count; ++i)
 		{
-			sec_y = aroundSector.around->sec_y;
-			sec_x = aroundSector.around->sec_x;
+			secY = aroundSector.around[i].sec_y;
+			secX = aroundSector.around[i].sec_x;
 
-			for (auto it = g_sector[sec_y][sec_x].begin(); it != g_sector[sec_y][sec_x].end(); it++)
+			for (auto it = g_sector[secY][secX].begin(); it != g_sector[secY][secX].end(); it++)
 			{
 				victim = *it;
-				if ((now_y - dfATTACK1_RANGE_Y) <= victim->y && victim->y <= now_y &&
-					(now_x + dfATTACK1_RANGE_X) >= victim->x && victim->x >= now_x)
+				if ((nowY - dfATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
+					(nowX + dfATTACK1_RANGE_X) >= victim->x && victim->x > nowX)
 				{
 					packet->Clear();
 					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
