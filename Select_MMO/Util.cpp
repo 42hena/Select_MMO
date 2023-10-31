@@ -17,6 +17,7 @@ extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern DWORD g_frameTime, totalTime;
+extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
 
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
@@ -545,11 +546,12 @@ void PrintLog()
 		fwrite(LogBuf, 1, strlen(LogBuf), fp);
 		// Print the current time 
 
-		sprintf_s(LogBuf, "Server Frame: %d Session cnt: %d  character cnt: %d sector: %d\n", 
-			frame, g_sessionMap.size(), g_characterMap.size(), cnt);
+		sprintf_s(LogBuf, "Server Frame: %d Session cnt: %d  character cnt: %d sector: %d acc:%d recv:%d send:%d\n", 
+			frame, g_sessionMap.size(), g_characterMap.size(), cnt, g_acceptCnt, g_recvCnt, g_sendCnt);
 		printf("%s", LogBuf);
 		fwrite(LogBuf, 1, strlen(LogBuf), fp);
 		frame = 0;
+		g_acceptCnt = g_recvCnt = g_sendCnt = 0;
 		fclose(fp);
 	}
 }
