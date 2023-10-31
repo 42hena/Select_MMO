@@ -42,7 +42,7 @@ public:
 	// # Param  : (None)                                #
 	// # return : (int : using Buffer size)             #
 	// ##################################################
-	int		GetDataSize(void) { return pPush - pPop; }
+	__int64		GetDataSize(void) { return pPush - pPop; }
 
 	// ##################################################
 	// # 버퍼의 처음 위치를 반환                        #
