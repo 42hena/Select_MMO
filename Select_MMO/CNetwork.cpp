@@ -6,13 +6,15 @@
 #include "Session.h"
 #include "Character.h"
 #include "CNetwork.h"
-
+#include "SerializationBuffer.h"
+#include "SendPacket.h"
+#include "CreatePacket.h"
 #include "Util.h"
 
 extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
-
+extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
 #define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator 
 #define Character_Type std::unordered_map<DWORD, st_Character*>::iterator 
 
@@ -100,7 +102,7 @@ bool CNetwork::NetBind()
 // -----
 
 	ZeroMemory(&addr, sizeof(addr));
-	InitSockAddr(&addr, INADDR_ANY, 10801);
+	InitSockAddr(&addr, INADDR_ANY, 10201);
 
 	bindRet = bind(g_listenSocket, (SOCKADDR*)&addr, sizeof(addr));
 	if (bindRet == SOCKET_ERROR)
@@ -182,7 +184,7 @@ bool CNetwork::NetworkAccept()
 		wprintf(L"[NetworkAccept] -> accept() Error\n");
 		return (false);
 	}
-
+	g_acceptCnt++;
 	int newID = id++;
 
 	newSession = new st_Session(clientSocket, newID, timeGetTime());
@@ -196,13 +198,13 @@ bool CNetwork::NetworkAccept()
 	g_characterMap.insert({ newID, newCharacter });
 	g_sector[newCharacter->sector.sec_y][newCharacter->sector.sec_x].push_back(newCharacter);
 	
+	//printf("Accept sock[%llu] sid[%d] cid[%d]\n", clientSocket, newSession->sessionID, newCharacter->characterId);
+
 	PushCreateMyCharacterJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
 	PushCreateOtherCharacterToMeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
 	PushCreateMyCharacterToOthersJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
-	//PushCreateOtherMoveStartTomeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
+	PushCreateOtherMoveStartTomeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
 
-	wprintf(L"newSession socket[%d\n", clientSocket);
-	wprintf(L"Accept Success\n");
 	return true;
 }
 
@@ -219,10 +221,9 @@ void CNetwork::NetworkRecv(SOCKET socket)
 // -----
 
 	siter = g_sessionMap.find(socket);
-	wprintf(L"Input socket[%d\n", socket);
 	if (siter == g_sessionMap.end())
 	{
-		wprintf(L"[NetworkRecv] -> Find error\n");
+		//wprintf(L"[NetworkRecv] -> Find error[%llu]\n", socket);
 		return ;
 	}
 
@@ -230,9 +231,6 @@ void CNetwork::NetworkRecv(SOCKET socket)
 	session = siter->second;
 
 	session->lastRecvTime = timeGetTime();
-
-	//session->recv_Q.GetUseSize();
-	printf("so[%d] DE[%d]\n", session->socket, session->recvQ.DirectEnqueueSize());
 
 	recvRet = recv(session->socket, session->recvQ.GetRearBufferPtr(), session->recvQ.DirectEnqueueSize(), 0);
 	if (recvRet == 0 || recvRet == SOCKET_ERROR)
@@ -244,14 +242,17 @@ void CNetwork::NetworkRecv(SOCKET socket)
 		}
 		else if (errCode == 10054)
 		{
-			wprintf(L"recv Error[%d]\n", errCode);
+			;
 		}
 		else
 		{
-			wprintf(L"another recv errorGame id[%d] code[%d]\n", session->sessionID, errCode);
+			wprintf(L"another recv errorGame socket[%llu] id[%d] code[%d]\n", socket, session->sessionID, errCode);
 		}
 
-		//
+		CSerialization buffer;
+
+		CreatePacketDeleteCharacter(buffer, session->sessionID);
+		SendPacketSectorAroundCast(session, &buffer);
 		g_sessionMap.erase(siter);
 		
 		citer = g_characterMap.find(session->sessionID);
@@ -259,13 +260,19 @@ void CNetwork::NetworkRecv(SOCKET socket)
 		{
 			wprintf(L"need Test\n");
 		}
+		
 		character = citer->second;
+		//printf("RecvDel socket:[%llu] sid:[%d] cid:[%d]\n", socket, character->session->sessionID, character->characterId);
 		g_characterMap.erase(session->sessionID);
 		g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
-		wprintf(L"del\n");
+		
+		delete character;
+		delete session;
+		closesocket(socket);
 		return;
 	}
 	session->recvQ.MoveRear(recvRet);
+	g_recvCnt++;
 	while (PacketMarshall(session))
 		;
 }
@@ -273,26 +280,65 @@ void CNetwork::NetworkRecv(SOCKET socket)
 bool CNetwork::NetworkSend(SOCKET socket)
 {
 	st_Session* session;
+	st_Character* character;
 	int errCode;
+
+	Session_Type sIter;
+	Character_Type cIter;
 // -----
 
-	Session_Type iter = g_sessionMap.find(socket);
-	if (iter == g_sessionMap.end())
+	sIter = g_sessionMap.find(socket);
+	if (sIter == g_sessionMap.end())
 	{
 		wprintf(L"[NetworkSend] -> Find error\n");
 		return (false);
 	}
-	session = iter->second;
+	session = sIter->second;
 
 	int send_ret = send(socket, session->sendQ.GetFrontBufferPtr(), session->sendQ.DirectDequeueSize(), 0);
 	if (send_ret == SOCKET_ERROR)
 	{
 		errCode = GetLastError();
-		printf("[NetworkSend] -> send() error[%d]\n", errCode);
-		session->disconnectFlag = true;
+		if (errCode == WSAEWOULDBLOCK)
+		{
+			return (false);
+		}
+		else if (errCode == 10054)
+		{
+			;
+		}
+		else
+		{
+			wprintf(L"[NetworkSend] errorGame socket[%llu] id[%d] code[%d]\n", socket, session->sessionID, errCode);
+		}
+		CSerialization buffer;
+
+		CreatePacketDeleteCharacter(buffer, session->sessionID);
+		SendPacketSectorAroundCast(session, &buffer);
+
+		g_sessionMap.erase(sIter);
+
+		cIter = g_characterMap.find(session->sessionID);
+		if (cIter == g_characterMap.end())
+		{
+			wprintf(L"need Test\n");
+		}
+
+		
+		character = cIter->second;
+		//wprintf(L"delete sID[%d] cid:[%d]\n", socket, character->characterId);
+		//printf("SendDel socket:[%llu] sid:[%d] cid:[%d]\n", socket, character->session->sessionID, character->characterId);
+		g_characterMap.erase(session->sessionID);
+		g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+
+		delete character;
+		delete session;
+		closesocket(socket);
+
 		return (false);
 	}
 	session->sendQ.MoveFront(send_ret);
+	g_sendCnt++;
 	return (true);
 }
 
