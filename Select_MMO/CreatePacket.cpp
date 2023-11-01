@@ -4,6 +4,8 @@
 #include "SerializationBuffer.h"
 #include "CreatePacket.h"
 
+extern DWORD g_syncCnt;
+
 void CreatePacketCreateMyCharacter(CSerialization& buffer, DWORD id, BYTE dir, short x, short y, BYTE hp)
 {
 	SHORT size;
@@ -152,7 +154,7 @@ void CreatePacketSync(CSerialization& buffer, DWORD id, short x, short y)
 	SHORT size;
 	SHORT type;
 // -----
-
+	
 	size = 10; // 2 + 8
 	type = SERVER_TO_CLIENT_SYNC;
 
@@ -161,6 +163,7 @@ void CreatePacketSync(CSerialization& buffer, DWORD id, short x, short y)
 
 	// Payload Info
 	buffer << id << x << y;
+	g_syncCnt++;
 }
 
 void CreatePacketEcho(CSerialization& buffer, DWORD time)

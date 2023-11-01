@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <list>
 #include <unordered_map>
+#include <time.h>
 #include <Windows.h>
 
 #include "SerializationBuffer.h"
@@ -18,7 +19,9 @@ extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern DWORD g_frameTime, totalTime;
 extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
-
+extern DWORD g_whileCnt, g_selectCnt;
+extern DWORD g_minFrame, g_maxFrame, g_avgFrame, g_prevFrame;
+extern DWORD g_syncCnt;
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
 void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
@@ -372,46 +375,38 @@ bool CheckCharacterMove(int y, int x)
 }
 DWORD Log;
 DWORD frame;
+DWORD prevFrame;
 void Update()
 {
 	st_Character* character;
 	SOCKET sock;
 	DWORD now;
+	DWORD frameTime;
 // -----
 
 	now = timeGetTime();
 	totalTime += now - g_frameTime;
 	Log += now - g_frameTime;;
 	g_frameTime = now;
-	if (totalTime < 40)
-		return;
-	frame++;
-	totalTime -= 40;
-	for (Charcter_Type cIter = g_characterMap.begin(); cIter != g_characterMap.end(); )
+	while (totalTime >= 40)
 	{
-		character = cIter->second;
-		++cIter;
-		if (character->hp <= 0)
+		now = timeGetTime();
+		frameTime = now - g_prevFrame;
+		g_minFrame = min(g_minFrame, frameTime);
+		g_maxFrame = max(g_maxFrame, frameTime);
+		g_avgFrame += frameTime;
+		g_prevFrame = now;
+		frame++;
+		totalTime -= 40;
+		for (Charcter_Type cIter = g_characterMap.begin(); cIter != g_characterMap.end(); )
 		{
-			CSerialization buffer;
-			sock = character->session->socket;
-			//printf("hp socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
-			CreatePacketDeleteCharacter(buffer, character->session->sessionID);
-			SendPacketSectorAroundCast(character->session, &buffer);
-			g_sessionMap.erase(sock);
-			g_characterMap.erase(character->session->sessionID);
-			g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
-			delete character->session;
-			delete character;
-			closesocket(sock);
-		}
-		else
-		{
-			if (timeGetTime() - character->session->lastRecvTime > dfNETWORK_PACKET_RECV_TIMEOUT)
+			character = cIter->second;
+			++cIter;
+			if (character->hp <= 0)
 			{
 				CSerialization buffer;
 				sock = character->session->socket;
-				//printf("Time socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
+				//printf("hp socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
 				CreatePacketDeleteCharacter(buffer, character->session->sessionID);
 				SendPacketSectorAroundCast(character->session, &buffer);
 				g_sessionMap.erase(sock);
@@ -420,113 +415,130 @@ void Update()
 				delete character->session;
 				delete character;
 				closesocket(sock);
-				continue;
 			}
-			switch (character->action)
+			else
 			{
-			case MOVE_DIR_LL:
-			{
-				if (CheckCharacterMove(character->y, character->x - SPEED_PLAYER_X))
+				if (timeGetTime() - character->session->lastRecvTime > dfNETWORK_PACKET_RECV_TIMEOUT)
 				{
-					character->x -= SPEED_PLAYER_X;
+					CSerialization buffer;
+					sock = character->session->socket;
+					//printf("Time socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
+					CreatePacketDeleteCharacter(buffer, character->session->sessionID);
+					SendPacketSectorAroundCast(character->session, &buffer);
+					g_sessionMap.erase(sock);
+					g_characterMap.erase(character->session->sessionID);
+					g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+					delete character->session;
+					delete character;
+					closesocket(sock);
+					continue;
 				}
-				break;
-			}
-			case MOVE_DIR_LU:
-			{
-				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+				switch (character->action)
 				{
-					character->y -= SPEED_PLAYER_Y;
-					character->x -= SPEED_PLAYER_X;
-				}
-				break;
-			}
-			case MOVE_DIR_UU:
-			{
-				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x))
+				case MOVE_DIR_LL:
 				{
-					character->y -= SPEED_PLAYER_Y;
+					if (CheckCharacterMove(character->y, character->x - SPEED_PLAYER_X))
+					{
+						character->x -= SPEED_PLAYER_X;
+					}
+					break;
 				}
-				break;
-			}
-			case MOVE_DIR_RU:
-			{
-				if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+				case MOVE_DIR_LU:
 				{
-					character->y -= SPEED_PLAYER_Y;
-					character->x += SPEED_PLAYER_X;
+					if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+					{
+						character->y -= SPEED_PLAYER_Y;
+						character->x -= SPEED_PLAYER_X;
+					}
+					break;
 				}
-				break;
-			}
+				case MOVE_DIR_UU:
+				{
+					if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x))
+					{
+						character->y -= SPEED_PLAYER_Y;
+					}
+					break;
+				}
+				case MOVE_DIR_RU:
+				{
+					if (CheckCharacterMove(character->y - SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+					{
+						character->y -= SPEED_PLAYER_Y;
+						character->x += SPEED_PLAYER_X;
+					}
+					break;
+				}
 
-			case MOVE_DIR_RR:
-			{
-				if (CheckCharacterMove(character->y, character->x + SPEED_PLAYER_X))
+				case MOVE_DIR_RR:
 				{
-					character->x += SPEED_PLAYER_X;
+					if (CheckCharacterMove(character->y, character->x + SPEED_PLAYER_X))
+					{
+						character->x += SPEED_PLAYER_X;
+					}
+					break;
 				}
-				break;
-			}
 
-			case MOVE_DIR_RD:
-			{
-				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+				case MOVE_DIR_RD:
 				{
-					character->y += SPEED_PLAYER_Y;
-					character->x += SPEED_PLAYER_X;
+					if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x + SPEED_PLAYER_X))
+					{
+						character->y += SPEED_PLAYER_Y;
+						character->x += SPEED_PLAYER_X;
+					}
+					break;
 				}
-				break;
-			}
 
-			case MOVE_DIR_DD:
-			{
-				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x))
+				case MOVE_DIR_DD:
 				{
-					character->y += SPEED_PLAYER_Y;
+					if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x))
+					{
+						character->y += SPEED_PLAYER_Y;
+					}
+					break;
 				}
-				break;
-			}
 
-			case MOVE_DIR_LD:
-			{
-				if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+				case MOVE_DIR_LD:
 				{
-					character->y += SPEED_PLAYER_Y;
-					character->x -= SPEED_PLAYER_X;
+					if (CheckCharacterMove(character->y + SPEED_PLAYER_Y, character->x - SPEED_PLAYER_X))
+					{
+						character->y += SPEED_PLAYER_Y;
+						character->x -= SPEED_PLAYER_X;
+					}
+					break;
 				}
-				break;
-			}
-			}// SWITCH¹®
-			if (character->action <= MOVE_DIR_LD)
-			{
-				character->sector.sec_x = character->x / 150;
-				character->sector.sec_y = character->y / 150;
-				if (IsCharacterSectorUpdate(character))
+				}// SWITCH¹®
+				if (character->action <= MOVE_DIR_LD)
 				{
-					CharacterSectorUpdatePacket(character);
+					character->sector.sec_x = character->x / 150;
+					character->sector.sec_y = character->y / 150;
+					if (IsCharacterSectorUpdate(character))
+					{
+						CharacterSectorUpdatePacket(character);
+					}
 				}
+				character->prevSector = character->sector;
 			}
-			character->prevSector = character->sector;
 		}
 	}
 }
 
-#include <time.h>
 void PrintLog()
 {
 	FILE* fp;
 	char LogBuf[512];
+	int sectorTotal;
 
 	if (Log >= 1000)
 	{
 		fopen_s(&fp, "Select_MMO_LOG.txt", "ab+");
-		int cnt = 0;
+		sectorTotal = 0;
 		Log -= 1000;
 		for (int i = 0; i < 6400 / 150 + 1; ++i)
 		{
 			for (int j = 0; j < 6400 / 150 + 1; ++j)
 			{
-				cnt += g_sector[i][j].size();
+				sectorTotal += g_sector[i][j].size();
 			}
 		}
 
@@ -540,18 +552,20 @@ void PrintLog()
 #else 
 		localtime_r(&curTime, pLocal);
 #endif 
-		sprintf_s(LogBuf, "%04d-%02d-%02dT%02d:%02d:%02d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
-			pLocal.tm_hour, pLocal.tm_min, pLocal.tm_sec);
+		sprintf_s(LogBuf, "%04d-%02d-%02d %02d:%02d:%02d\nSession cnt: %d\nCharacter cnt: %d\nsector: %d\nselect:%d acc:%d recv:%d send:%d\n"
+			"Server Frame: %d/%d Avg Frame: %d Min Frame: %d Max Frame: %d\n"
+			"Sync count: %d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
+			pLocal.tm_hour, pLocal.tm_min, pLocal.tm_sec,
+			g_sessionMap.size(), g_characterMap.size(), sectorTotal, g_selectCnt, g_acceptCnt, g_recvCnt, g_sendCnt,
+			frame, g_whileCnt, g_avgFrame / frame, g_minFrame, g_maxFrame,
+			g_syncCnt);
 		printf("%s", LogBuf);
 		fwrite(LogBuf, 1, strlen(LogBuf), fp);
-		// Print the current time 
 
-		sprintf_s(LogBuf, "Server Frame: %d Session cnt: %d  character cnt: %d sector: %d acc:%d recv:%d send:%d\n", 
-			frame, g_sessionMap.size(), g_characterMap.size(), cnt, g_acceptCnt, g_recvCnt, g_sendCnt);
-		printf("%s", LogBuf);
-		fwrite(LogBuf, 1, strlen(LogBuf), fp);
 		frame = 0;
-		g_acceptCnt = g_recvCnt = g_sendCnt = 0;
+		g_selectCnt = g_whileCnt = g_acceptCnt = g_recvCnt = g_sendCnt = 0;
+		g_minFrame = 1e9;
+		g_avgFrame = g_maxFrame = 0;
 		fclose(fp);
 	}
 }

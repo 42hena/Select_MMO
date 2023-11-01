@@ -14,7 +14,7 @@
 
 extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
-
+#include <time.h>//todo del
 void MoveStart(st_Session* session, CSerialization* packet)
 {
 	BYTE dir;

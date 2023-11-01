@@ -14,7 +14,8 @@
 extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
-extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
+extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt, g_selectCnt;
+
 #define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator 
 #define Character_Type std::unordered_map<DWORD, st_Character*>::iterator 
 
@@ -240,7 +241,7 @@ void CNetwork::NetworkRecv(SOCKET socket)
 		{
 			return;
 		}
-		else if (errCode == 10054)
+		else if (errCode == 0 || errCode == 10054)
 		{
 			;
 		}
@@ -354,6 +355,7 @@ void CNetwork::NetworkSelect(SOCKET* socketTable, FD_SET* readSet, FD_SET* write
 
 	
 	socketCount = select(0, readSet, writeSet, nullptr, &time);
+	g_selectCnt++;
 	if (socketCount > 0)
 	{
 		for (i = 0 ; i < 64 ; ++i)
