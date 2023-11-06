@@ -534,7 +534,7 @@ void PrintLog()
 		fopen_s(&fp, "Select_MMO_LOG.txt", "ab+");
 		if (fp == nullptr)
 		{
-			printf("can't open file\n");
+			wprintf(L"can't open file\n");
 			return;
 		}
 		sectorTotal = 0;
@@ -560,7 +560,7 @@ void PrintLog()
 			static_cast<int>(g_sessionMap.size()), static_cast<int>(g_characterMap.size()), sectorTotal, g_selectCnt, g_acceptCnt, g_recvCnt, g_sendCnt,
 			frame, g_whileCnt, g_avgFrame / frame, g_minFrame, g_maxFrame,
 			g_syncCnt);
-		printf("%s", LogBuf);
+		wprintf(L"%s", LogBuf);
 		fwrite(LogBuf, 1, strlen(LogBuf), fp);
 
 		// √ ±‚»≠
