@@ -63,15 +63,14 @@ void SendPacketSectorAroundCast(st_Session* session, CSerialization* packet, boo
 	int i;
 // -----
 
-	citer = g_characterMap.find(session->sessionID);
-	if (citer == g_characterMap.end())
+	// 케릭터 지정
+	character = FindCharacter(session->sessionID);
+	if (character == nullptr)
 	{
 		wprintf(L"SendPacket_SectorAroundCast ?????\n");
 		return;
 	}
 
-	// 케릭터 지정
-	character = citer->second;
 	GetAroundSector(character->sector.sec_y, character->sector.sec_x, &aroundSector);
 
 	if (sendMe)

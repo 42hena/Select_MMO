@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <Windows.h>
 
+#include "PROTOCOL.h"
 #include "SerializationBuffer.h"
 #include "CreatePacket.h"
 #include "Session.h"
@@ -10,10 +11,10 @@
 #include "Character.h"
 #include "SendPacket.h"
 #include "Util.h"
-#include "PROTOCOL.h"
 
 extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
+
 void MoveStart(st_Session* session, CSerialization* packet)
 {
 	BYTE dir;
@@ -23,10 +24,10 @@ void MoveStart(st_Session* session, CSerialization* packet)
 
 	*packet >> dir >> x >> y;
 
-	character = g_characterMap[session->sessionID];
-	if (character == NULL)
+	character = FindCharacter(session->sessionID);
+	if (character == nullptr)
 	{
-		wprintf(L"warning\n");
+		wprintf(L"character not Found\n");
 		return ;
 	}
 
@@ -87,11 +88,11 @@ void MoveStop(st_Session* session, CSerialization* packet)
 	*packet >> dir >> x >> y;
 
 	// 케릭터 존재 검색
-	character = g_characterMap[session->sessionID];
-	if (character == NULL)
+	character = FindCharacter(session->sessionID);
+	if (character == nullptr)
 	{
-		wprintf(L"warning\n"); // TODO: 로그를 파일로 빼야할 듯.
-		return ;
+		wprintf(L"character not Found\n");
+		return;
 	}
 
 	// 서버와 클라이언트 싱크 맞추기.
@@ -155,14 +156,11 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 // -----
 
 	*packet >> dir >> x >> y;
-	character = g_characterMap[session->sessionID];
-
-	// nullptr || dir Error
+	character = FindCharacter(session->sessionID);
 	if (character == nullptr)
 	{
-		// 예외 처리
-		wprintf(L"[Attack1] -> nullptr\n");
-		return ;
+		wprintf(L"character not Found\n");
+		return;
 	}
 
 	// 서버와 클라이언트 싱크 맞추기.

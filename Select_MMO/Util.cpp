@@ -110,8 +110,14 @@ void PushCreateOtherCharacterToMeJob(st_Session* session, DWORD id, BYTE dir, sh
 	int secX;
 
 	CSerialization packet;
+// -----
 
-	myCharacter = g_characterMap[session->sessionID];
+	myCharacter = FindCharacter(session->sessionID);
+	if (myCharacter == nullptr)
+	{
+		wprintf(L"character not Found\n");
+		return;
+	}
 	
 
 	GetAroundSector(myCharacter->sector.sec_y, myCharacter->sector.sec_x, &mySector);
@@ -150,11 +156,17 @@ void PushCreateOtherMoveStartTomeJob(st_Session* session, DWORD id, BYTE dir, sh
 	st_Character* myCharacter;
 	st_SECTOR_AROUND mySector;
 	st_Character* character;
-	
-	myCharacter = g_characterMap[session->sessionID];
 	int secY;
 	int secX;
+// -----
 
+	myCharacter = FindCharacter(session->sessionID);
+	if (myCharacter == nullptr)
+	{
+		wprintf(L"character not Found\n");
+		return;
+	}
+	
 	GetAroundSector(myCharacter->sector.sec_y, myCharacter->sector.sec_x, &mySector);
 
 	for (int i = 0; i < mySector.count; ++i)
