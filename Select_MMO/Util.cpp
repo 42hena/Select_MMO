@@ -23,6 +23,24 @@ extern DWORD g_minFrame, g_maxFrame, g_avgFrame, g_prevFrame;
 extern DWORD g_syncCnt;
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
+void DeleteCharacterAndSession(st_Character * character)
+{
+	CSerialization buffer;
+	SOCKET sock;
+// -----
+
+	sock = character->session->socket;
+	CreatePacketDeleteCharacter(buffer, character->session->sessionID);
+	SendPacketSectorAroundCast(character->session, &buffer);
+	g_sessionMap.erase(sock);
+	g_characterMap.erase(character->session->sessionID);
+	g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
+	delete character->session;
+	delete character;
+	closesocket(sock);
+}
+
+
 void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
 {
 	int i;
@@ -403,33 +421,13 @@ void Update()
 			++cIter;
 			if (character->hp <= 0)
 			{
-				CSerialization buffer;
-				sock = character->session->socket;
-				//printf("hp socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
-				CreatePacketDeleteCharacter(buffer, character->session->sessionID);
-				SendPacketSectorAroundCast(character->session, &buffer);
-				g_sessionMap.erase(sock);
-				g_characterMap.erase(character->session->sessionID);
-				g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
-				delete character->session;
-				delete character;
-				closesocket(sock);
+				DeleteCharacterAndSession(character);
 			}
 			else
 			{
 				if (timeGetTime() - character->session->lastRecvTime > ERROR_NETWORK_PACKET_RECV_TIMEOUT)
 				{
-					CSerialization buffer;
-					sock = character->session->socket;
-					//printf("Time socket:[%llu] sid:[%d] cid:[%d]\n", sock, character->session->sessionID, character->characterId);
-					CreatePacketDeleteCharacter(buffer, character->session->sessionID);
-					SendPacketSectorAroundCast(character->session, &buffer);
-					g_sessionMap.erase(sock);
-					g_characterMap.erase(character->session->sessionID);
-					g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
-					delete character->session;
-					delete character;
-					closesocket(sock);
+					DeleteCharacterAndSession(character);
 					continue;
 				}
 				switch (character->action)
