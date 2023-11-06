@@ -21,6 +21,10 @@ extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
 extern DWORD g_whileCnt, g_selectCnt;
 extern DWORD g_minFrame, g_maxFrame, g_avgFrame, g_prevFrame;
 extern DWORD g_syncCnt;
+extern DWORD Log;
+extern DWORD frame;
+extern DWORD prevFrame;
+
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
 void DeleteCharacterAndSession(st_Character * character)
@@ -390,9 +394,7 @@ bool CheckCharacterMove(int y, int x)
 		return (false);
 	return (true);
 }
-DWORD Log;
-DWORD frame;
-DWORD prevFrame;
+
 void Update()
 {
 	st_Character* character;

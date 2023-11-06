@@ -19,6 +19,9 @@ DWORD g_selectCnt;
 DWORD g_whileCnt;
 DWORD g_minFrame = 1000000000, g_maxFrame, g_avgFrame, g_prevFrame;
 DWORD g_syncCnt;
+DWORD Log;
+DWORD frame;
+DWORD prevFrame;
 
 void RunProgram()
 {
