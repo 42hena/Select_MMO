@@ -25,6 +25,7 @@ extern DWORD Log;
 extern DWORD frame;
 extern DWORD prevFrame;
 
+#define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
 st_Character* FindCharacter(DWORD sessionID)
@@ -37,6 +38,18 @@ st_Character* FindCharacter(DWORD sessionID)
 		return (cIter->second);
 	return (nullptr);
 }
+
+st_Session* FindSession(SOCKET socket)
+{
+	Session_Type sIter;
+	// -----
+
+	sIter = g_sessionMap.find(socket);
+	if (sIter != g_sessionMap.end())
+		return (sIter->second);
+	return (nullptr);
+}
+
 void DeleteCharacterAndSession(st_Character * character)
 {
 	CSerialization buffer;
