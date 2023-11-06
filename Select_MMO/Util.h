@@ -1,6 +1,7 @@
 #ifndef __UTIL_H__
 #define __UTIL_H__
 
+void DeleteCharacterAndSession(st_Character* character);
 bool PacketMarshall(st_Session* session);
 void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around);
 void PushCreateMyCharacterJob(st_Session* session, DWORD id, BYTE dir, short x, short y, BYTE hp);
