@@ -524,30 +524,35 @@ void PrintLog()
 	FILE* fp;
 	char LogBuf[512];
 	int sectorTotal;
+	int i, j;
+	time_t curTime;
+	struct tm pLocal;
+// -----
 
 	if (Log >= 1000)
 	{
 		fopen_s(&fp, "Select_MMO_LOG.txt", "ab+");
+		if (fp == nullptr)
+		{
+			printf("can't open file\n");
+			return;
+		}
 		sectorTotal = 0;
 		Log -= 1000;
-		for (int i = 0; i < RANGE_MOVE_BOTTOM / SECTOR_MAX_Y; ++i)
+		for (i = 0; i < RANGE_MOVE_BOTTOM / SECTOR_MAX_Y; ++i)
 		{
-			for (int j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X; ++j)
+			for (j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X; ++j)
 			{
 				sectorTotal += static_cast<int>(g_sector[i][j].size());
 			}
 		}
 
-
-		time_t curTime = time(NULL);
+		curTime = time(NULL);
 
 		// Convert the current time 
-		struct tm pLocal;
-#if defined(_WIN32) || defined(_WIN64) 
 		localtime_s(&pLocal, &curTime);
-#else 
-		localtime_r(&curTime, pLocal);
-#endif 
+
+		// 문자열로 치환 및 파일 쓰기
 		sprintf_s(LogBuf, "%04d-%02d-%02d %02d:%02d:%02d\nSession cnt: %d\nCharacter cnt: %d\nsector: %d\nselect:%d acc:%d recv:%d send:%d\n"
 			"Server Frame: %d/%d Avg Frame: %d Min Frame: %d Max Frame: %d\n"
 			"Sync count: %d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
@@ -558,6 +563,7 @@ void PrintLog()
 		printf("%s", LogBuf);
 		fwrite(LogBuf, 1, strlen(LogBuf), fp);
 
+		// 초기화
 		frame = 0;
 		g_selectCnt = g_whileCnt = g_acceptCnt = g_recvCnt = g_sendCnt = 0;
 		g_minFrame = 1000000000;
