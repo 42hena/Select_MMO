@@ -298,7 +298,7 @@ bool CNetwork::NetworkSend(SOCKET socket)
 		if (character == nullptr)
 		{
 			wprintf(L"need Test\n");
-			return;
+			return (false);
 		}
 
 		DeleteCharacterAndSession(character);
