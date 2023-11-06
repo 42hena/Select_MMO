@@ -574,9 +574,9 @@ void PrintLog()
 		}
 		sectorTotal = 0;
 		Log -= 1000;
-		for (i = 0; i < RANGE_MOVE_BOTTOM / SECTOR_MAX_Y; ++i)
+		for (i = 0; i < RANGE_MOVE_BOTTOM / SECTOR_MAX_Y + 1; ++i)
 		{
-			for (j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X; ++j)
+			for (j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X + 1; ++j)
 			{
 				sectorTotal += static_cast<int>(g_sector[i][j].size());
 			}
