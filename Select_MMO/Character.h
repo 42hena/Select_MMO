@@ -3,13 +3,15 @@
 
 #include "Session.h"
 #include "Sector.h"
+#include "PROTOCOL.h"
+
 
 struct st_Character
 {
 	st_Character(st_Session* newSession, DWORD	newId, BYTE action, BYTE dir, char hp)
-		: session(newSession), characterId(newId), action(action), direction(dir), hp(hp), y(rand()%6400), x(rand() % 6400), attackTime(0)
+		: session(newSession), characterId(newId), action(action), direction(dir), hp(hp), y(rand()% RANGE_MOVE_BOTTOM), x(rand() % RANGE_MOVE_RIGHT), attackTime(0)
 	{
-		sector = { y / 150, x / 150 };
+		sector = { y / SECTOR_MAX_Y, x / 200 };
 		prevSector = sector;
 	}
 

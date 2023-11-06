@@ -12,7 +12,7 @@
 #include "Util.h"
 #include "PROTOCOL.h"
 
-extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
+extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 void MoveStart(st_Session* session, CSerialization* packet)
 {
@@ -62,8 +62,8 @@ void MoveStart(st_Session* session, CSerialization* packet)
 	}
 	character->x = x;
 	character->y = y;
-	character->sector.sec_x = x / 150;
-	character->sector.sec_y = y / 150;
+	character->sector.sec_x = x / SECTOR_MAX_X;
+	character->sector.sec_y = y / SECTOR_MAX_Y;
 	if (IsCharacterSectorUpdate(character))
 	{
 		CharacterSectorUpdatePacket(character);
@@ -121,8 +121,8 @@ void MoveStop(st_Session* session, CSerialization* packet)
 	}
 	character->x = x;
 	character->y = y;
-	character->sector.sec_x = x / 150;
-	character->sector.sec_y = y / 150;
+	character->sector.sec_x = x / SECTOR_MAX_X;
+	character->sector.sec_y = y / SECTOR_MAX_Y;
 	if (IsCharacterSectorUpdate(character))
 	{
 		CharacterSectorUpdatePacket(character);
@@ -181,8 +181,8 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 
 	character->y = y;
 	character->x = x;
-	character->sector.sec_y = character->y / 150;
-	character->sector.sec_x = character->x / 150;
+	character->sector.sec_y = character->y / SECTOR_MAX_Y;
+	character->sector.sec_x = character->x / SECTOR_MAX_X;
 
 	nowX = character->x;
 	nowY = character->y;
@@ -191,8 +191,8 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 
 
 	// 데미지 먹이는 곳. 
-	secY = nowY / 150;
-	secX = nowX / 150;
+	secY = nowY / SECTOR_MAX_Y;
+	secX = nowX / SECTOR_MAX_X;
 
 	GetAroundSector(secY, secX, &aroundSector);
 	if (dir == MOVE_DIR_LL)

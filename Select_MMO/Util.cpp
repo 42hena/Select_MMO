@@ -14,9 +14,8 @@
 #include "PROTOCOL.h"
 
 extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
-extern std::list<st_Character*> g_sector[6400 / 150 + 1][6400 / 150 + 1];
+extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
-extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
 extern DWORD g_frameTime, totalTime;
 extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
 extern DWORD g_whileCnt, g_selectCnt;
@@ -35,11 +34,11 @@ void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
 
 	for (i = 0; i < 3; ++i)
 	{
-		if (secY + i < 0 || secY + i >= (6400 / 150 + 1))
+		if (secY + i < 0 || secY + i >= (RANGE_MOVE_BOTTOM / SECTOR_MAX_Y))
 			continue;
 		for (j = 0; j < 3; ++j)
 		{
-			if (secX + j < 0 || secX + j >= (6400 / 150 + 1))
+			if (secX + j < 0 || secX + j >= (RANGE_MOVE_RIGHT / SECTOR_MAX_X))
 				continue;
 			around->around[around->count].sec_y = secY + i;
 			around->around[around->count].sec_x = secX + j;
@@ -369,7 +368,7 @@ void CharacterSectorUpdatePacket(st_Character* character)
 
 bool CheckCharacterMove(int y, int x)
 {
-	if (y < 0 || y > 6400 || x < 0 || x > 6400)
+	if (y < 0 || y >= RANGE_MOVE_BOTTOM || x < 0 || x >= RANGE_MOVE_RIGHT)
 		return (false);
 	return (true);
 }
@@ -510,8 +509,8 @@ void Update()
 				}// SWITCH¹®
 				if (character->action <= MOVE_DIR_LD)
 				{
-					character->sector.sec_x = character->x / 150;
-					character->sector.sec_y = character->y / 150;
+					character->sector.sec_x = character->x / SECTOR_MAX_X;
+					character->sector.sec_y = character->y / SECTOR_MAX_Y;
 					if (IsCharacterSectorUpdate(character))
 					{
 						CharacterSectorUpdatePacket(character);
@@ -534,9 +533,9 @@ void PrintLog()
 		fopen_s(&fp, "Select_MMO_LOG.txt", "ab+");
 		sectorTotal = 0;
 		Log -= 1000;
-		for (int i = 0; i < 6400 / 150 + 1; ++i)
+		for (int i = 0; i < RANGE_MOVE_BOTTOM / SECTOR_MAX_Y; ++i)
 		{
-			for (int j = 0; j < 6400 / 150 + 1; ++j)
+			for (int j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X; ++j)
 			{
 				sectorTotal += g_sector[i][j].size();
 			}

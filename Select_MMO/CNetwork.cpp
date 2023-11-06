@@ -10,10 +10,11 @@
 #include "SendPacket.h"
 #include "CreatePacket.h"
 #include "Util.h"
+#include "PROTOCOL.h"
 
 extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
-extern std::list< st_Character* > g_sector[6400 / 150 + 1][6400 / 150 + 1];
+extern std::list< st_Character* > g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
 extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt, g_selectCnt;
 
 #define Session_Type std::unordered_map<SOCKET, st_Session*>::iterator 
