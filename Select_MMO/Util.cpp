@@ -27,6 +27,16 @@ extern DWORD prevFrame;
 
 #define Charcter_Type std::unordered_map<DWORD, st_Character*>::iterator
 
+st_Character* FindCharacter(DWORD sessionID)
+{
+	Charcter_Type cIter;
+	// -----
+
+	cIter = g_characterMap.find(sessionID);
+	if (cIter != g_characterMap.end())
+		return (cIter->second);
+	return (nullptr);
+}
 void DeleteCharacterAndSession(st_Character * character)
 {
 	CSerialization buffer;
