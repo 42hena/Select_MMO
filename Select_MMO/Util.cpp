@@ -522,7 +522,7 @@ void Update()
 void PrintLog()
 {
 	FILE* fp;
-	char LogBuf[512];
+	WCHAR LogBuf[512];
 	int sectorTotal;
 	int i, j;
 	time_t curTime;
@@ -553,15 +553,15 @@ void PrintLog()
 		localtime_s(&pLocal, &curTime);
 
 		// 문자열로 치환 및 파일 쓰기
-		sprintf_s(LogBuf, "%04d-%02d-%02d %02d:%02d:%02d\nSession cnt: %d\nCharacter cnt: %d\nsector: %d\nselect:%d acc:%d recv:%d send:%d\n"
+		wsprintf(LogBuf, L"%04d-%02d-%02d %02d:%02d:%02d\nSession cnt: %d\nCharacter cnt: %d\nsector: %d\nselect:%d acc:%d recv:%d send:%d\n"
 			"Server Frame: %d/%d Avg Frame: %d Min Frame: %d Max Frame: %d\n"
-			"Sync count: %d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
+			"Sync count: %d\n\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
 			pLocal.tm_hour, pLocal.tm_min, pLocal.tm_sec,
 			static_cast<int>(g_sessionMap.size()), static_cast<int>(g_characterMap.size()), sectorTotal, g_selectCnt, g_acceptCnt, g_recvCnt, g_sendCnt,
 			frame, g_whileCnt, g_avgFrame / frame, g_minFrame, g_maxFrame,
 			g_syncCnt);
 		wprintf(L"%s", LogBuf);
-		fwrite(LogBuf, 1, strlen(LogBuf), fp);
+		fwrite(LogBuf, 2, wcslen(LogBuf), fp);
 
 		// 초기화
 		frame = 0;
