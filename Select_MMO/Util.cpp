@@ -534,7 +534,7 @@ void PrintLog()
 		{
 			for (int j = 0; j < RANGE_MOVE_RIGHT / SECTOR_MAX_X; ++j)
 			{
-				sectorTotal += g_sector[i][j].size();
+				sectorTotal += static_cast<int>(g_sector[i][j].size());
 			}
 		}
 
@@ -552,7 +552,7 @@ void PrintLog()
 			"Server Frame: %d/%d Avg Frame: %d Min Frame: %d Max Frame: %d\n"
 			"Sync count: %d\n", pLocal.tm_year + 1900, pLocal.tm_mon + 1, pLocal.tm_mday,
 			pLocal.tm_hour, pLocal.tm_min, pLocal.tm_sec,
-			g_sessionMap.size(), g_characterMap.size(), sectorTotal, g_selectCnt, g_acceptCnt, g_recvCnt, g_sendCnt,
+			static_cast<int>(g_sessionMap.size()), static_cast<int>(g_characterMap.size()), sectorTotal, g_selectCnt, g_acceptCnt, g_recvCnt, g_sendCnt,
 			frame, g_whileCnt, g_avgFrame / frame, g_minFrame, g_maxFrame,
 			g_syncCnt);
 		printf("%s", LogBuf);
@@ -560,7 +560,7 @@ void PrintLog()
 
 		frame = 0;
 		g_selectCnt = g_whileCnt = g_acceptCnt = g_recvCnt = g_sendCnt = 0;
-		g_minFrame = 1e9;
+		g_minFrame = 1000000000;
 		g_avgFrame = g_maxFrame = 0;
 		fclose(fp);
 	}
