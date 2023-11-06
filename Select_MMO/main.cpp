@@ -10,7 +10,7 @@
 
 std::unordered_map<SOCKET, st_Session*> g_sessionMap;
 std::unordered_map<DWORD, st_Character *> g_characterMap;
-std::list< st_Character* > g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
+std::list< st_Character* > g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y + 1][RANGE_MOVE_RIGHT / SECTOR_MAX_X + 1];
 
 DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
 DWORD g_frameTime;

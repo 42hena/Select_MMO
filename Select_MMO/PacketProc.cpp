@@ -12,7 +12,7 @@
 #include "SendPacket.h"
 #include "Util.h"
 
-extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
+extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y + 1][RANGE_MOVE_RIGHT / SECTOR_MAX_X + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 
 void MoveStart(st_Session* session, CSerialization* packet)

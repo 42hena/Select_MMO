@@ -14,7 +14,7 @@
 #include "PROTOCOL.h"
 
 extern std::unordered_map<SOCKET, st_Session*> g_sessionMap;
-extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y][RANGE_MOVE_RIGHT / SECTOR_MAX_X];
+extern std::list<st_Character*> g_sector[RANGE_MOVE_BOTTOM / SECTOR_MAX_Y + 1][RANGE_MOVE_RIGHT / SECTOR_MAX_X + 1];
 extern std::unordered_map<DWORD, st_Character*> g_characterMap;
 extern DWORD g_frameTime, totalTime;
 extern DWORD g_sendCnt, g_recvCnt, g_acceptCnt;
@@ -67,7 +67,6 @@ void DeleteCharacterAndSession(st_Character * character)
 	closesocket(sock);
 }
 
-
 void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
 {
 	int i;
@@ -79,11 +78,11 @@ void GetAroundSector(int secY, int secX, st_SECTOR_AROUND* around)
 
 	for (i = 0; i < 3; ++i)
 	{
-		if (secY + i < 0 || secY + i >= (RANGE_MOVE_BOTTOM / SECTOR_MAX_Y))
+		if (secY + i < 0 || secY + i >= (RANGE_MOVE_BOTTOM / SECTOR_MAX_Y + 1))
 			continue;
 		for (j = 0; j < 3; ++j)
 		{
-			if (secX + j < 0 || secX + j >= (RANGE_MOVE_RIGHT / SECTOR_MAX_X))
+			if (secX + j < 0 || secX + j >= (RANGE_MOVE_RIGHT / SECTOR_MAX_X + 1))
 				continue;
 			around->around[around->count].sec_y = secY + i;
 			around->around[around->count].sec_x = secX + j;
@@ -128,7 +127,6 @@ void PushCreateOtherCharacterToMeJob(st_Session* session, DWORD id, BYTE dir, sh
 		secX = mySector.around[i].sec_x;
 		for (auto iter = g_sector[secY][secX].begin(); iter != g_sector[secY][secX].end(); ++iter)
 		{
-
 			character = *iter;
 			if (character != myCharacter)
 			{
