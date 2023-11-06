@@ -3,8 +3,8 @@
 #include <list>
 #include <unordered_map>
 
-#include "SerializationBuffer.h"
 #include "PROTOCOL.h"
+#include "SerializationBuffer.h"
 #include "Session.h"
 #include "Character.h"
 #include "Util.h"
@@ -38,7 +38,6 @@ void SendPacketSector(int secY, int secX, CSerialization* packet, st_Character* 
 	Sector_Type siter;
 	st_Character* character;
 	std::list<st_Character*> sectorList;
-	
 // -----
 
 	// 원하는 위치의 sector List 검색
