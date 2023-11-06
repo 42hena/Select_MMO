@@ -200,8 +200,7 @@ bool CNetwork::NetworkAccept()
 	g_characterMap.insert({ newID, newCharacter });
 	g_sector[newCharacter->sector.sec_y][newCharacter->sector.sec_x].push_back(newCharacter);
 	
-	//printf("Accept sock[%llu] sid[%d] cid[%d]\n", clientSocket, newSession->sessionID, newCharacter->characterId);
-
+	// 접속 후 작업
 	PushCreateMyCharacterJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
 	PushCreateOtherCharacterToMeJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
 	PushCreateMyCharacterToOthersJob(newSession, newID, newCharacter->direction, newCharacter->x, newCharacter->y, newCharacter->hp);
@@ -251,30 +250,20 @@ void CNetwork::NetworkRecv(SOCKET socket)
 			wprintf(L"another recv errorGame socket[%llu] id[%d] code[%d]\n", socket, session->sessionID, errCode);
 		}
 
-		CSerialization buffer;
-
-		CreatePacketDeleteCharacter(buffer, session->sessionID);
-		SendPacketSectorAroundCast(session, &buffer);
-		g_sessionMap.erase(siter);
-		
 		citer = g_characterMap.find(session->sessionID);
 		if (citer == g_characterMap.end())
 		{
 			wprintf(L"need Test\n");
 		}
-		
+
 		character = citer->second;
-		//printf("RecvDel socket:[%llu] sid:[%d] cid:[%d]\n", socket, character->session->sessionID, character->characterId);
-		g_characterMap.erase(session->sessionID);
-		g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
-		
-		delete character;
-		delete session;
-		closesocket(socket);
+		DeleteCharacterAndSession(character);
 		return;
 	}
 	session->recvQ.MoveRear(recvRet);
 	g_recvCnt++;
+
+	// 패킷 마샬링 작업
 	while (PacketMarshall(session))
 		;
 }
@@ -328,8 +317,6 @@ bool CNetwork::NetworkSend(SOCKET socket)
 
 		
 		character = cIter->second;
-		//wprintf(L"delete sID[%d] cid:[%d]\n", socket, character->characterId);
-		//printf("SendDel socket:[%llu] sid:[%d] cid:[%d]\n", socket, character->session->sessionID, character->characterId);
 		g_characterMap.erase(session->sessionID);
 		g_sector[character->sector.sec_y][character->sector.sec_x].remove(character);
 
