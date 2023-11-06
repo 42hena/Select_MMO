@@ -396,7 +396,6 @@ DWORD prevFrame;
 void Update()
 {
 	st_Character* character;
-	SOCKET sock;
 	DWORD now;
 	DWORD frameTime;
 // -----
