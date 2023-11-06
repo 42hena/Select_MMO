@@ -206,10 +206,10 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 			for (auto it = g_sector[secY][secX].begin(); it != g_sector[secY][secX].end(); it++)
 			{
 				victim = *it;
-				if ((nowY- dfATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
-					(nowX - dfATTACK1_RANGE_X) <= victim->x && victim->x < nowX)
+				if ((nowY- ATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
+					(nowX - ATTACK1_RANGE_X) <= victim->x && victim->x < nowX)
 				{
-					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
+					victim->hp = max(0, (int)victim->hp - ATTACK1_DAMAGE);
 					packet->Clear();
 					CreatePacketDamage(*packet, character->characterId, victim->characterId, victim->hp);
 
@@ -229,11 +229,11 @@ void Attack1Packet(st_Session* session, CSerialization* packet)
 			for (auto it = g_sector[secY][secX].begin(); it != g_sector[secY][secX].end(); it++)
 			{
 				victim = *it;
-				if ((nowY - dfATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
-					(nowX + dfATTACK1_RANGE_X) >= victim->x && victim->x > nowX)
+				if ((nowY - ATTACK1_RANGE_Y) <= victim->y && victim->y <= nowY &&
+					(nowX + ATTACK1_RANGE_X) >= victim->x && victim->x > nowX)
 				{
 					packet->Clear();
-					victim->hp = max(0, (int)victim->hp - dfATTACK1_DAMAGE);
+					victim->hp = max(0, (int)victim->hp - ATTACK1_DAMAGE);
 					CreatePacketDamage(*packet, character->characterId, victim->characterId, victim->hp);
 
 					SendPacketSectorAroundCast(victim->session, packet, true);

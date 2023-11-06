@@ -418,7 +418,7 @@ void Update()
 			}
 			else
 			{
-				if (timeGetTime() - character->session->lastRecvTime > dfNETWORK_PACKET_RECV_TIMEOUT)
+				if (timeGetTime() - character->session->lastRecvTime > ERROR_NETWORK_PACKET_RECV_TIMEOUT)
 				{
 					CSerialization buffer;
 					sock = character->session->socket;
