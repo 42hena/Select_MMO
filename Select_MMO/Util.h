@@ -14,5 +14,7 @@ void AddCharacterToSector(st_Character* character);
 void RemoveCharacterFromSector(st_Character* character);
 void Update();
 void PrintLog();
+st_Character* FindCharacter(DWORD sessionID);
+st_Session* FindSession(SOCKET socket);
 
 #endif
